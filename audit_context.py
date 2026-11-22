@@ -281,12 +281,13 @@ class Audit:
         number = self.external_directories.setdefault(directory, len(self.external_directories) + 1)
         return safe_label(f"<外部目录 {number}>/" + path.name)
 
-    def add(self, category, source, state, detail):
+    def add(self, category, source, state, detail, *, identity_clue=False):
         row = {
             "category": category,
             "source": self.path_label(source) if isinstance(source, Path) else safe_label(source),
             "status": state,
             "detail": safe_label(detail),
+            "identity_clue": identity_clue,
         }
         if row not in self.rows:
             self.rows.append(row)
@@ -401,10 +402,12 @@ class Audit:
             tags.append("含身份类标签")
         if category == "自动记忆" and USER_NOTE.search(header):
             tags.append("含用户记忆类型标记")
+        identity_clue = bool(tags)
         if target != Path(os.path.abspath(path)):
             tags.append("经符号链接")
         flags = "、".join(tags) if tags else "未命中内置身份线索"
-        self.add(category, path, status, "；".join(filter(None, (note, flags))))
+        self.add(category, path, status, "；".join(filter(None, (note, flags))),
+                 identity_clue=identity_clue)
         if not imports:
             return
 
@@ -449,7 +452,8 @@ class Audit:
         projects = object_value(data.get("projects"))
         first_prompts = sum(bool(object_value(entry).get("firstPrompt")) for entry in projects.values())
         self.add("全局状态", path, status,
-                 f"身份字段：{'、'.join(keys) or '未发现已知字段'}；含首条提示词的项目：{first_prompts}")
+                 f"身份字段：{'、'.join(keys) or '未发现已知字段'}；含首条提示词的项目：{first_prompts}",
+                 identity_clue=bool(keys))
         tool_status = STORED if status == STORED else CONFIGURED
         self.tools(path, data, "用户级", tool_status)
         for i, (name, entry) in enumerate(projects.items(), 1):
@@ -549,7 +553,7 @@ class Audit:
                         if rule.suffix == ".md":
                             self.document(rule, "规则", CONDITIONAL, "子目录规则", True)
         else:
-            self.add("项目指令", work, UNKNOWN, "该位置是主目录或文件系统根；请用 --project 指定实际项目")
+            self.add("项目指令", work, UNKNOWN, "当前是本机盘点。核对项目时，请指定 Claude 实际工作的目录（--project）")
 
         for root in dict.fromkeys((config, managed, project / ".claude", work / ".claude")):
             for path in self.walk(root / "rules", "规则", follow_links=True):
