@@ -182,6 +182,11 @@ summary:hover { color: var(--verm); }
 .audit-next { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0; color: var(--moss); }
 .audit-cleanup { margin-top: 8px; color: var(--muted); font-size: 13px; }
 .audit-breakdown { margin: 7px 0; padding-left: 20px; }
+.audit-coverage { margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--line); }
+.audit-coverage ul, .audit-browser-list { margin: 6px 0; padding: 0; list-style: none; }
+.audit-coverage li, .audit-browser-list li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.audit-coverage li p, .audit-browser-list li p { color: var(--muted); font-size: 13px; }
+.audit-coverage .status, .audit-browser-list .status { margin: 0 0 0 7px; }
 .audit-detail { margin-top: 12px; }
 .audit-all { margin-top: 5px; padding: 0; border: 0; background: transparent; text-decoration: underline; color: var(--moss); cursor: pointer; }
 .audit-results { margin-top: 8px; max-height: 28rem; overflow: auto; }
@@ -357,8 +362,8 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
         </div>
         <div class="todo">
           <h3>这一步会查什么</h3>
-          <p>一次列出配置、自动记忆和外接工具的来源与状态，并盘点本地会话记录。macOS 同时运行原版 <code>claude-cleanup</code> 的只读审计。</p>
-          <p>这一步检查用户级配置和本机记录。具体项目、公网出口和浏览器登录状态可在后面的条目单独核对。</p>
+          <p>一次盘点八个检查领域，包括配置、记忆、外接工具、备份、会话、缓存和日志、桌面数据、凭据位置与浏览器站点数据。报告也会列出当前终端的代理配置线索。</p>
+          <p>网页缓存按浏览器支持的索引查域名。实际公网出口、登录有效性和当前会话读取的内容会标明各自的核验范围。</p>
         </div>
         <div class="details-stack" id="audit-preview">
           <p>要开始检查，请先在下载的项目文件夹启动本地手帖。电脑需有 Python 3.9 或更新版本。</p>
@@ -386,6 +391,15 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
               <a href="#browser-data">核对浏览器登录</a>
             </div>
             <p id="audit-cleanup" class="audit-cleanup"></p>
+            <section class="audit-coverage" aria-labelledby="audit-coverage-title">
+              <h3 id="audit-coverage-title">八项检查分别查到了什么</h3>
+              <ul id="audit-coverage"></ul>
+              <details>
+                <summary>查看逐浏览器、逐配置的结果</summary>
+                <p>报告只显示匹配的站点域名。浏览器专有格式、权限受限或正在写入的存储可能只能部分核验。</p>
+                <ul class="audit-browser-list" id="audit-browsers"></ul>
+              </details>
+            </section>
             <details class="audit-detail" id="audit-detail">
               <summary id="audit-detail-title">查看全部明细</summary>
               <button type="button" class="audit-all" id="audit-all" hidden>显示全部记录</button>
@@ -901,7 +915,8 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
       const reviewCategories = {
         identity: {label: '身份与记忆线索', count: 0},
         tool: {label: '已配置外接工具', count: 0},
-        hook: {label: '会话启动或输入时可能运行的钩子', count: 0}
+        hook: {label: '会话启动或输入时可能运行的钩子', count: 0},
+        browser: {label: '有目标站点数据留存的浏览器配置', count: 0}
       };
       for (const finding of findings) {
         const reason = finding.identity_clue ? 'identity' : finding.review_kind;
@@ -951,6 +966,36 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
       };
     }
 
+    function renderCoverage(report) {
+      const coverage = report.coverage.map(item => {
+        const row = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = '#' + item.section;
+        link.textContent = item.title;
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = item.status;
+        const detail = document.createElement('p');
+        detail.textContent = item.detail;
+        row.append(link, status, detail);
+        return row;
+      });
+      document.querySelector('#audit-coverage').replaceChildren(...coverage);
+      const browsers = report.browsers.map(item => {
+        const row = document.createElement('li');
+        const label = document.createElement('strong');
+        label.textContent = item.browser + ' · ' + item.profile;
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = item.status + (item.incomplete && item.status !== '未核验' ? ' · 部分未核验' : '');
+        const detail = document.createElement('p');
+        detail.textContent = item.detail;
+        row.append(label, status, detail);
+        return row;
+      });
+      document.querySelector('#audit-browsers').replaceChildren(...browsers);
+    }
+
     startAudit.addEventListener('click', async () => {
       startAudit.disabled = true;
       auditReport.hidden = true;
@@ -966,6 +1011,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           return;
         }
         renderSummary(report.results);
+        renderCoverage(report);
         const cleanup = report.cleanup_audit;
         const note = cleanup.scope
           ? `缓存和日志候选 ${cleanup.cache_log_candidates.length} 项，桌面数据位置 ${cleanup.desktop_data_candidates.length} 项。详见「缓存和日志」与「桌面应用数据」。`

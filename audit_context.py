@@ -258,6 +258,8 @@ def system_paths(home):
 
 class Audit:
     def __init__(self, home, work, project, config, managed, extra_files, backup_dirs):
+        self.session_count = 0
+        self.backup_profiles = set()
         self.aliases = ((config, "<Claude配置>"), (work, "<工作目录>"), (project, "<项目目录>"),
                         (home, "~"), (managed, "<组织配置>"))
         self.allowed = tuple(root for root in (home, work, project, config, managed, *backup_dirs)
@@ -450,6 +452,8 @@ class Audit:
         data = self.json_file(path, "全局状态", required)
         if data is None:
             return
+        if status == STORED:
+            self.backup_profiles.add(path)
         keys = [k for k in ("oauthAccount", "userID", "machineID", "accountUuid", "organizationUuid") if k in data]
         projects = object_value(data.get("projects"))
         first_prompts = sum(bool(object_value(entry).get("firstPrompt")) for entry in projects.values())
@@ -626,6 +630,7 @@ class Audit:
             count = sum(path.suffix == ".jsonl" and path.is_file()
                         for path in self.entries(folder, "项目存储"))
             if count:
+                self.session_count += count
                 self.add("本地会话", folder, STORED, f"{count} 份顶层会话记录，正文及恢复状态未核验")
         for folder in sorted(self.memory_directories):
             self.memory(folder, "设置里指定的记忆位置，当前会话是否采用待核对")
@@ -686,7 +691,9 @@ def main():
         return 2
 
     if args.json:
-        print(json.dumps({"mode": "read-only", "cleanup_audit": cleanup, "results": audit.rows},
+        print(json.dumps({"mode": "read-only", "cleanup_audit": cleanup, "results": audit.rows,
+                          "inventory_counts": {"sessions": audit.session_count,
+                                               "profiles_in_backup": len(audit.backup_profiles)}},
                          ensure_ascii=False, indent=2))
     else:
         print("Claude 本机环境 · 只读检测")

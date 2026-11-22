@@ -11,6 +11,7 @@ import sys
 from threading import Lock, Thread
 import webbrowser
 
+from full_audit import add_local_checks
 
 ROOT = Path(__file__).resolve().parent
 TOKEN_TAG = b'<meta name="local-audit-token" content="">'
@@ -34,7 +35,7 @@ def run_audit():
     report = json.loads(result.stdout)
     if not isinstance(report, dict) or report.get("mode") != "read-only":
         raise ValueError("Unexpected audit output")
-    return report
+    return add_local_checks(report, Path.home())
 
 
 class ChecklistServer(ThreadingHTTPServer):
