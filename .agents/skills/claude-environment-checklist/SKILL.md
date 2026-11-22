@@ -7,7 +7,7 @@ description: 使用本项目排查 Claude 环境时，先打开下载项目里�
 
 ## 打开网页
 
-以本技能文件的位置为基准，先用浏览器打开下载项目里的 [index.html](../../../index.html)。只调用技能、提供手帖链接或泛泛说「帮我检查一下」时，打开首页，展示第 0 步的只读检查并等待用户选择。提到具体问题时，在本地网页地址后附上对应条目标识。只有用户明确要求执行一项或多项检查时，才在打开网页后按指定范围开始只读检查。
+先打开下载项目中的本地手帖。第 0 步可用 [本地启动器](../../../launch_checklist.py) 打开，在项目根目录运行 `python3 -B launch_checklist.py`，Windows 使用 `py -3 -B launch_checklist.py`。启动器会打开网页，等用户点击「开始只读检查」才盘点本机。用户只想看手帖时，也可打开 [index.html](../../../index.html)。提到具体问题时，在网页地址后附上对应条目标识。只有用户明确要求执行一项或多项检查时，才按指定范围开始只读检查。
 
 - 一次盘点本机配置、记忆和外接工具 → [第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)。
 - 网络线路和公网出口 → [Claude 公网出口](https://huangserva.github.io/claude-environment-checklist/#network-egress)。
@@ -18,7 +18,7 @@ description: 使用本项目排查 Claude 环境时，先打开下载项目里�
 
 ## 运行本机只读审计
 
-用户明确要求执行第 0 步的一键只读检查时，以本技能文件所在目录为基准找到仓库里的 [audit_context.py](../../../audit_context.py)。这个脚本一次盘点配置、记忆和外接工具，在 macOS 上同时运行原版只读审计。用户只选其中一个范围时，按手帖核对该条目。运行整合脚本前，确认脚本在目标电脑运行，并能读取 Claude 实际工作的项目目录。尚未确定目标项目时，先确认目标路径。
+本地页面的按钮盘点用户级配置和会话留存，使用同一个 [audit_context.py](../../../audit_context.py)。用户明确请 Codex 检查一个具体项目时，先确认 Claude 实际工作目录，再用下面的命令检查。用户只选其中一个范围时，按手帖核对该条目。
 
 ```bash
 python3 -B "/脚本的绝对路径/audit_context.py" --project "/Claude实际工作的项目目录"

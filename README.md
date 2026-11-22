@@ -4,7 +4,7 @@
 
 ## 下载项目，打开手帖
 
-**先下载完整项目，再打开里面的网页，按条目执行。** 下载时会一起拿到网页、Codex 技能和只读脚本。
+**下载完整项目，双击启动文件，点「开始只读检查」。** 结果直接显示在手帖里。电脑需要 Python 3.9 或更新版本。
 
 1. **下载项目。** 在终端运行下面这条克隆命令。已经克隆的用户可以先拉取最新版本。
 
@@ -12,8 +12,8 @@
    git clone https://github.com/huangserva/claude-environment-checklist.git
    ```
 
-2. **打开网页。** 在下载得到的 `claude-environment-checklist` 文件夹里，双击 `index.html`。也可以用 Codex 打开这个文件夹，在聊天里选择 `$claude-environment-checklist` 技能并发送，技能会优先打开本地手帖。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
-3. **从第 0 步开始。** 首页会先显示「一键只读检查」。复制一条命令到终端运行，或把检查指令发给已经打开本项目的 Codex。配置、会话、登录状态和原文件都会保留。需要查公网出口或浏览器会话时，再从左侧选择对应条目。[预览第 0 步](https://huangserva.github.io/claude-environment-checklist/#quick-audit)
+2. **启动本地手帖。** macOS 双击 `Start-Checklist.command`，Windows 双击 `Start-Checklist.cmd`。Linux 在项目文件夹运行 `python3 -B launch_checklist.py`，其中 `-B` 禁止写入 Python 字节码缓存。启动器会用浏览器打开手帖。
+3. **点「开始只读检查」。** 第 0 步会盘点用户级配置、记忆、外接工具和本机会话记录，结果直接显示在本地页面。关闭启动器的终端窗口即可退出手帖。
 
 如果你现在只在聊天里贴了 GitHub 链接，可以先发这一句。
 
@@ -21,7 +21,7 @@
 
 [预览网页手帖](https://huangserva.github.io/claude-environment-checklist/)
 
-[![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示第 0 步一键只读检查](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
+[![本地手帖首页，右侧的第 0 步可以点击开始只读检查](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
 
 ## 遇到什么问题，从哪一项查
 
@@ -39,11 +39,13 @@
 
 ### 打开网页逐项核对
 
-打开下载项目中的 `index.html`，从左侧目录选择你遇到的问题，按该项的步骤操作。展开「交给 Codex」可以复制该项的技能调用和只读核对指令。查公网出口和浏览器网站数据时，从这个入口开始。
+从手帖左侧选择你遇到的问题，再按该项的步骤操作。公网出口、浏览器网站数据和具体项目配置可在对应条目单独检查。只想浏览时，可以直接打开 `index.html`。
 
-### 在终端独立运行只读脚本
+### 用 Codex 或终端检查具体项目
 
-安装 Python 3 后，在下载的 `claude-environment-checklist` 文件夹打开终端，运行其中的脚本。把示例路径换成 Claude 实际工作的项目目录。[第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)
+可以在 Codex 中打开下载的项目，调用 `$claude-environment-checklist`。手帖各条目也提供「交给 Codex」的指令。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
+
+从终端执行时，在下载的 `claude-environment-checklist` 文件夹运行下面的命令。把示例路径换成 Claude 实际工作的项目目录。
 
 **macOS 或 Linux**
 
