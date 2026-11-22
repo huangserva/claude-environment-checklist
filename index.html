@@ -372,6 +372,20 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           <p>常见漏项是全局配置里的外部记忆连接，以及项目历史里的首条提示词。即使项目说明没有身份信息，也要把配置、记忆和已连接的工具分别检查。</p>
         </div>
         <div class="todo">
+          <h3>一条命令做只读检测</h3>
+          <p>从下方下载脚本，保存到下载目录。打开终端，进入 Claude 实际工作的项目，按操作系统运行一条命令。需要本机有 Python 3。</p>
+          <p class="sources"><a href="audit_context.py" download>下载只读检测脚本</a></p>
+          <p>macOS 或 Linux</p>
+          <pre><code>python3 -B "$HOME/Downloads/audit_context.py"</code></pre>
+          <p>Windows 的 PowerShell</p>
+          <pre><code>py -3 -B "$HOME\Downloads\audit_context.py"</code></pre>
+          <p class="check-note"><code>-B</code> 让 Python 不生成字节码缓存。若脚本保存在其他位置，把命令中的路径换成实际路径。脚本只在终端显示来源、状态和线索类型，不调用 Claude 或外接工具。</p>
+          <details>
+            <summary>如何读检测结果</summary>
+            <p>「启动候选」表示路径或配置可能使文件在启动时载入。「按条件」表示与项目、路径、插件或会话状态相关。「已配置」表示找到了设置或工具声明。「仅留存」表示发现历史、本机凭据文件或备份。「未核验」表示静态文件无法确认的会话、账号或访问范围。</p>
+            <p>命中文件里的邮箱格式或身份标签时，只报告线索类型。当前会话实际加载了什么、外接工具是否连接，以及云端账号记忆，按下方步骤分别核验。</p>
+          </details>
+          <div class="details-stack"></div>
           <h3>从实际使用的会话开始</h3>
           <p>先确认 Claude 的版本、工作目录、是否在远程环境运行，以及用户级配置目录（默认 <code>~/.claude</code>，可通过 <code>CLAUDE_CONFIG_DIR</code> 指定；Windows 默认是 <code>%USERPROFILE%\.claude</code>）。在已打开的 Claude Code 会话中查下面的面板。未运行时，可以只检查文件，无需启动会话来验证。</p>
           <ol class="steps">
