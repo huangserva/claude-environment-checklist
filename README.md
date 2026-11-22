@@ -1,16 +1,25 @@
 # Claude 使用环境检查手帖
 
-Claude 连不上、突然知道了旧项目里的信息，或者换机前想确认哪些会话和配置要保留？这套工具帮你按线索查到**请求走了哪条网络线路、信息可能来自哪份文件或哪个工具、备份还有哪些内容可以恢复**。
+这套 Codex 技能和网页手帖帮助你逐项核对 Claude 的公网出口、配置、记忆、外接工具以及会话备份。
 
-## 用 Codex 打开手帖
+## 下载项目，打开手帖
 
-1. 克隆仓库，把仓库目录选为 Codex 当前项目。技能随仓库提供，无需单独安装。已经克隆的用户可以先拉取最新版本。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
-2. 在对话框输入 `$claude-environment-checklist`，选中同名技能，再发送「先打开手帖，等我选检查项」。
-3. 网页打开后，先选要查的条目。要请 Codex 执行时，再说清楚要查哪一项。盘点本机配置时，告诉 Codex Claude 实际工作的项目目录。
+**先下载完整项目，再打开里面的网页，按条目执行。** 下载时会一起拿到网页、Codex 技能和只读脚本。
 
-只把 GitHub 链接贴进对话，Codex 可以阅读网页。要调用仓库技能，请在 Codex 中打开克隆下来的目录。
+1. **下载项目。** 在终端运行下面这条克隆命令。已经克隆的用户可以先拉取最新版本。
 
-[打开在线手帖](https://huangserva.github.io/claude-environment-checklist/) · [下载单文件只读检测脚本](https://huangserva.github.io/claude-environment-checklist/#identity-context)
+   ```bash
+   git clone https://github.com/huangserva/claude-environment-checklist.git
+   ```
+
+2. **打开网页。** 在下载得到的 `claude-environment-checklist` 文件夹里，双击 `index.html`。也可以用 Codex 打开这个文件夹，在聊天里选择 `$claude-environment-checklist` 技能并发送，技能会优先打开本地手帖。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
+3. **选一项检查。** 在网页左侧选条目，照「核对步骤」执行。需要 Codex 帮忙时，展开「交给 Codex」，把复制的指令发到已打开这个项目的 Codex 对话。
+
+如果你现在只在聊天里贴了 GitHub 链接，可以先发这一句。
+
+> 我想用这个项目。请先告诉我怎么下载完整仓库，再用 Codex 技能 `$claude-environment-checklist` 打开下载里的网页手帖，等我选定要执行的检查项。
+
+[预览网页手帖](https://huangserva.github.io/claude-environment-checklist/)
 
 [![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示公网出口核对步骤](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
 
@@ -29,25 +38,25 @@ Claude 连不上、突然知道了旧项目里的信息，或者换机前想确�
 
 ### 打开网页逐项核对
 
-从左侧目录选择你遇到的问题，按该项的步骤操作。也可以展开「交给 Codex」，复制该项的只读核对指令。查公网出口和浏览器网站数据时，从这个入口开始。[打开在线手帖](https://huangserva.github.io/claude-environment-checklist/)
+打开下载项目中的 `index.html`，从左侧目录选择你遇到的问题，按该项的步骤操作。展开「交给 Codex」可以复制该项的技能调用和只读核对指令。查公网出口和浏览器网站数据时，从这个入口开始。
 
-### 下载脚本，一次盘点本机
+### 在终端独立运行只读脚本
 
-安装 Python 3 后，将 `audit_context.py` 保存到「下载」目录，从 Claude 实际工作的项目目录打开终端，执行对应命令。[下载脚本](https://huangserva.github.io/claude-environment-checklist/#identity-context)
+安装 Python 3 后，在下载的 `claude-environment-checklist` 文件夹打开终端，运行其中的脚本。把示例路径换成 Claude 实际工作的项目目录。[配置、记忆与身份来源](https://huangserva.github.io/claude-environment-checklist/#identity-context)
 
 **macOS 或 Linux**
 
 ```bash
-python3 -B "$HOME/Downloads/audit_context.py"
+python3 -B audit_context.py --project "/Claude实际工作的项目目录"
 ```
 
 **Windows PowerShell**
 
 ```powershell
-py -3 -B "$HOME\Downloads\audit_context.py"
+py -3 -B audit_context.py --project "C:\Claude实际工作的项目目录"
 ```
 
-`-B` 禁止 Python 写入缓存。Windows 的 `-3` 指定 Python 3。文件保存在其他地方时，替换为实际路径。
+`-B` 禁止 Python 写入字节码缓存，`--project` 指定要检查的项目。Windows 的 `-3` 指定 Python 3。
 
 在 macOS 上，脚本会同时输出原版 `claude-cleanup` 的本机审计和本项目的配置检查。前者盘点默认目录、缓存、日志、桌面数据和相关进程，后者查配置、记忆和外接工具。Windows 和 Linux 会运行配置检查，原版专用于 macOS 的审计标为「不适用」。
 

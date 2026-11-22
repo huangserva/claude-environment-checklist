@@ -71,6 +71,8 @@ h1, h2, h3, p { margin: 0; }
   letter-spacing: .012em;
 }
 .hero p { margin-top: 10px; color: var(--muted); }
+.project-download { margin-top: 12px; }
+.project-download .copy-command { margin-top: 8px; }
 .hero-art { width: 100%; height: 132px; overflow: hidden; position: relative; }
 .sun {
   width: 70px; height: 70px; border-radius: 50%;
@@ -146,14 +148,14 @@ details { margin: 0; }
 details + details { margin-top: 6px; }
 summary { display: list-item; cursor: pointer; width: fit-content; color: var(--moss); font-weight: 650; }
 summary:hover { color: var(--verm); }
-.codex-action summary {
+.project-download summary, .codex-action summary {
   border: 1px solid #d9b5a6;
   border-radius: 3px;
   padding: 3px 9px;
   background: var(--verm-soft);
   color: var(--verm);
 }
-.codex-prompt { margin: 7px 0; padding: 10px 12px; background: #f4f0e6; overflow-wrap: anywhere; }
+.codex-prompt { margin: 7px 0; padding: 10px 12px; background: #f4f0e6; white-space: pre-line; overflow-wrap: anywhere; }
 .copy-command {
   background: var(--verm); border: 1px solid var(--verm); border-radius: 3px;
   color: #fffaf4; padding: 4px 10px; cursor: pointer; font-size: 13px;
@@ -245,6 +247,14 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
     <div>
       <h1>使用环境检查手帖</h1>
       <p>从公网出口开始，按项核对网络、备份和本机登录数据。</p>
+      <details class="project-download">
+        <summary>下载完整项目</summary>
+        <p>在终端运行克隆命令。项目包含本地手帖、Codex 技能和只读脚本。</p>
+        <pre><code class="clone-command">git clone https://github.com/huangserva/claude-environment-checklist.git</code></pre>
+        <button class="copy-command" type="button" hidden>复制下载命令</button>
+        <span class="copy-status" role="status"></span>
+        <p>下载后，双击文件夹中的 <code>index.html</code>，选择一项检查，再按页面执行。</p>
+      </details>
     </div>
     <div class="hero-art" aria-hidden="true"><span class="sun"></span><span class="ridges"><span></span><span></span><span></span><span></span></span></div>
   </div>
@@ -389,13 +399,12 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         </div>
         <div class="todo">
           <h3>一条命令运行整合审计</h3>
-          <p>下载下方这一个文件，保存到下载目录。打开终端，进入 Claude 实际工作的项目。macOS 会同时运行原版 <code>claude-cleanup</code> 的只读审计和本手帖的配置、记忆及外接工具检查。只需本机有 Python 3。</p>
-          <p class="sources"><a href="audit_context.py" download>下载整合版只读脚本</a></p>
+          <p>从下载得到的项目文件夹打开终端，使用里面的 <code>audit_context.py</code>。把示例路径换成 Claude 实际工作的目录。macOS 会同时运行原版 <code>claude-cleanup</code> 的只读审计和本手帖的配置、记忆及外接工具检查。只需本机有 Python 3。</p>
           <p>macOS 或 Linux</p>
-          <pre><code>python3 -B "$HOME/Downloads/audit_context.py"</code></pre>
+          <pre><code>python3 -B audit_context.py --project "/Claude实际工作的项目目录"</code></pre>
           <p>Windows 的 PowerShell</p>
-          <pre><code>py -3 -B "$HOME\Downloads\audit_context.py"</code></pre>
-          <p class="check-note"><code>-B</code> 让 Python 不生成字节码缓存。Windows 与 Linux 会执行配置检查，原版的 macOS 审计标为「不适用」。脚本只在终端报告发现。它没有清理入口。</p>
+          <pre><code>py -3 -B audit_context.py --project "C:\Claude实际工作的项目目录"</code></pre>
+          <p class="check-note"><code>-B</code> 禁止 Python 写入字节码缓存，<code>--project</code> 指定要检查的项目。Windows 的 <code>-3</code> 指定 Python 3。Windows 与 Linux 会执行配置检查，原版的 macOS 审计标为「不适用」。脚本只在终端报告发现。</p>
           <details>
             <summary>如何读检测结果</summary>
             <p>「启动候选」表示路径或配置可能使文件在启动时载入。「按条件」表示与项目、路径、插件或会话状态相关。「已配置」表示找到了设置或工具声明。「仅留存」表示发现历史、本机凭据文件或备份。「未核验」表示静态文件无法确认的会话、账号或访问范围。</p>
@@ -452,7 +461,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         </div>
         <div class="details-stack">
           <details class="codex-action">
-            <summary>交给 Codex 做完整只读核对</summary>
+            <summary>交给 Codex</summary>
             <p class="codex-prompt">只读核对 Claude 能得知我身份和偏好的来源。先确认实际工作目录、Claude 客户端、用户级配置目录和启动方式，再查各级指令文件、规则与引用、自动记忆、全局状态和历史备份、项目首条提示词、外部记忆工具各级配置、插件及启动钩子。网页或桌面账号侧核对个人指令、记忆与项目知识。按来源报告已加载、按条件加载、可调用、仅发现留存或未核验；只输出路径类别、字段名和计数，保留当前会话、配置与记忆。不要重启 Claude 或调用外部记忆库来测试。</p>
             <button class="copy-command" type="button" hidden>复制给 Codex</button>
             <span class="copy-status" role="status"></span>
@@ -498,7 +507,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         <div class="details-stack">
           <details class="codex-action">
             <summary>交给 Codex</summary>
-            <p class="codex-prompt">帮我确认 Claude 本地会话的位置，核对要保留的会话。如果我指定了项目或会话，导出到新目录，再逐文件校验并返回路径。</p>
+            <p class="codex-prompt">只读确认 Claude 本地会话的位置，核对要保留的会话。等我另行要求导出时，再复制到新目录、逐文件校验并返回路径。</p>
             <button class="copy-command" type="button" hidden>复制给 Codex</button>
             <span class="copy-status" role="status"></span>
           </details>
@@ -735,19 +744,31 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
   window.addEventListener('hashchange', syncLocation);
   window.addEventListener('popstate', syncLocation);
 
-  for (const action of document.querySelectorAll('.codex-action')) {
-    const button = action.querySelector('.copy-command');
-    const prompt = action.querySelector('.codex-prompt');
-    const status = action.querySelector('.copy-status');
+  function enableCopy(container, source, destination) {
+    const button = container.querySelector('.copy-command');
+    const status = container.querySelector('.copy-status');
     button.hidden = false;
     button.addEventListener('click', async () => {
       try {
-        await navigator.clipboard.writeText(prompt.textContent.trim());
-        status.textContent = '已复制。粘贴到 Codex 聊天即可。';
+        await navigator.clipboard.writeText(source.textContent.trim());
+        status.textContent = '已复制。请粘贴到' + destination + '。';
       } catch {
-        status.textContent = '请选中上方指令，手动复制到 Codex。';
+        status.textContent = '请选中上方文字，手动复制到' + destination + '。';
       }
     });
+  }
+
+  const projectDownload = document.querySelector('.project-download');
+  enableCopy(projectDownload, projectDownload.querySelector('.clone-command'), '终端');
+
+  for (const action of document.querySelectorAll('.codex-action')) {
+    const prompt = action.querySelector('.codex-prompt');
+    const section = action.closest('.sheet').id;
+    const entry = '先确认当前 Codex 项目已加载仓库技能 $claude-environment-checklist。'
+      + '如果还没有加载，请先告诉我如何克隆仓库并在 Codex 中打开，等技能加载后再读取本机数据。'
+      + '技能已加载时，先打开下载项目中的 index.html#' + section + '，再执行下面的只读核对。';
+    prompt.textContent = entry + '\n\n' + prompt.textContent.trim();
+    enableCopy(action, prompt, 'Codex 对话');
   }
 
   const evidenceCheck = document.querySelector('.evidence-check');
