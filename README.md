@@ -2,15 +2,17 @@
 
 Claude 连不上、突然知道了旧项目里的信息，或者换机前想确认哪些会话和配置要保留？这套工具帮你按线索查到**请求走了哪条网络线路、信息可能来自哪份文件或哪个工具、备份还有哪些内容可以恢复**。
 
+## 用 Codex 打开手帖
+
+1. 克隆仓库，把仓库目录选为 Codex 当前项目。技能随仓库提供，无需单独安装。已经克隆的用户可以先拉取最新版本。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
+2. 在对话框输入 `$claude-environment-checklist`，选中同名技能，再发送「先打开手帖，等我选检查项」。
+3. 网页打开后，先选要查的条目。要请 Codex 执行时，再说清楚要查哪一项。盘点本机配置时，告诉 Codex Claude 实际工作的项目目录。
+
+只把 GitHub 链接贴进对话，Codex 可以阅读网页。要调用仓库技能，请在 Codex 中打开克隆下来的目录。
+
 [打开在线手帖](https://huangserva.github.io/claude-environment-checklist/) · [下载单文件只读检测脚本](https://huangserva.github.io/claude-environment-checklist/#identity-context)
 
 [![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示公网出口核对步骤](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
-
-## 用 Codex 打开手帖
-
-1. 克隆这个仓库，在 Codex 中把仓库目录选为当前项目。技能随仓库提供，无需单独安装。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
-2. 在对话里输入 `$claude-environment-checklist`，选择同名技能并发送。也可以接着写「打开公网出口检查」，直接进入对应条目。
-3. Codex 会打开网页供你逐项核对。需要盘点本机配置时，再请它运行只读审计，并给出 Claude 实际所在的项目目录。
 
 ## 遇到什么问题，从哪一项查
 
