@@ -6,6 +6,12 @@ Claude 连不上、突然知道了旧项目里的信息，或者换机前想确�
 
 [![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示公网出口核对步骤](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
 
+## 用 Codex 打开手帖
+
+1. 克隆这个仓库，在 Codex 中把仓库目录选为当前项目。技能随仓库提供，无需单独安装。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
+2. 在对话里输入 `$claude-environment-checklist`，选择同名技能并发送。也可以接着写「打开公网出口检查」，直接进入对应条目。
+3. Codex 会打开网页供你逐项核对。需要盘点本机配置时，再请它运行只读审计，并给出 Claude 实际所在的项目目录。
+
 ## 遇到什么问题，从哪一项查
 
 | 遇到的问题 | 建议先看 |
