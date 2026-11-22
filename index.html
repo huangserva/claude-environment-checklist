@@ -213,11 +213,14 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
 
 .steps { margin: 8px 0 0; padding-left: 1.4em; }
 .steps li + li { margin-top: 7px; }
-.route-options > details { border-bottom: 1px solid var(--line); padding: 9px 0; }
-.route-options > details:first-child { padding-top: 0; }
-.route-options > details + details { margin-top: 0; }
-.route-options p { margin: 6px 0; }
+:is(.route-options, .browser-options) > details { border-bottom: 1px solid var(--line); padding: 9px 0; }
+:is(.route-options, .browser-options) > details:first-child { padding-top: 0; }
+:is(.route-options, .browser-options) > details + details { margin-top: 0; }
+:is(.route-options, .browser-options) p { margin: 6px 0; }
 .route-options a, .sources a { color: var(--moss); text-underline-offset: 3px; }
+.browser-options { margin-top: 14px; }
+.browser-options .sources { margin-top: 6px; }
+.browser-note { margin-top: 10px; color: var(--muted); }
 .evidence-check { margin-top: 13px; padding: 10px 13px; background: #f4f0e6; }
 .evidence-check label { color: var(--moss); font-size: 13px; font-weight: 650; display: block; }
 .evidence-check select {
@@ -476,17 +479,58 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           <span class="status">按需检查</span>
         </header>
         <div class="readout">
-          <strong>逐个浏览器配置查看网站数据</strong>
-          <p>同一浏览器的多个用户配置可有独立的网站数据。曾经登录 Claude 的配置才需要列入检测。</p>
+          <strong>这台电脑装了哪些浏览器，就逐个查哪些</strong>
+          <p>Safari、Chrome、Comet 优先核对。Edge、Firefox、Brave 和其他已安装的浏览器也要列入。个人、工作等用户配置分别记录结果。</p>
         </div>
         <div class="todo">
           <h3>核对步骤</h3>
-          <p>在浏览器的「隐私」或「网站数据」设置里分别搜索 <code>claude.ai</code> 和 <code>anthropic.com</code>，记录匹配状态。需要移除时，先确认具体浏览器配置和站点。</p>
+          <ol class="steps">
+            <li>先列出这台电脑上安装和使用过的浏览器。可从 macOS 的「应用程序」、Windows 的「已安装的应用」或 Linux 的应用菜单找。</li>
+            <li>按下面的入口打开网站数据列表，分别搜索 <code>claude</code> 和 <code>anthropic</code>。核对完整域名和子域名，例如 <code>claude.ai</code>、<code>claude.com</code>、<code>claudeusercontent.com</code> 和 <code>anthropic.com</code>。</li>
+            <li>按「浏览器 / 用户配置」记录「发现网站数据」「未发现」「未核验」或「未安装」。无法确认某个配置是否在当前列表范围内时，标记「未核验」。</li>
+          </ol>
+          <div class="browser-options" aria-label="各浏览器的网站数据入口">
+            <details name="browser-check" open>
+              <summary>Safari（macOS）</summary>
+              <p>菜单栏选「Safari 浏览器 → 设置 → 隐私 → 管理网站数据」，在搜索框里输入域名。用过多个用户场景时，先在「设置 → 用户场景」确认场景清单，再核对当前网站数据列表的范围。</p>
+              <div class="sources"><a href="https://support.apple.com/zh-cn/guide/safari/sfri11471/mac" target="_blank" rel="noopener noreferrer">Apple 网站数据说明</a> · <a href="https://support.apple.com/zh-cn/105100" target="_blank" rel="noopener noreferrer">Safari 用户场景说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>Google Chrome</summary>
+              <p>切到要查的用户配置，在地址栏输入 <code>chrome://settings/content/all</code>。也可从「设置 → 隐私和安全 → 第三方 Cookie → 查看所有网站数据和权限」进入。Cookie 是网站保存在浏览器里的数据。</p>
+              <div class="sources"><a href="https://support.google.com/chrome/answer/95647?hl=zh-Hans" target="_blank" rel="noopener noreferrer">Chrome 网站数据说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>Comet</summary>
+              <p>切到要查的用户配置，在地址栏试用 <code>comet://settings/content/all</code>。入口如随版本变化，可在 Comet 设置的「隐私和安全」中搜索「网站数据」或「站点设置」，进入按网站列出的数据页面。</p>
+              <div class="sources"><a href="https://www.perplexity.ai/hub/blog/introducing-privacy-snapshot" target="_blank" rel="noopener noreferrer">Comet 隐私设置说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>Microsoft Edge</summary>
+              <p>切到要查的用户配置，打开「设置 → 隐私、搜索和服务 → Cookie → 查看所有 Cookie 和站点数据」，在网站列表里搜索。</p>
+              <div class="sources"><a href="https://support.microsoft.com/en-us/edge/manage-cookies-in-microsoft-edge-view-allow-block-delete-and-use" target="_blank" rel="noopener noreferrer">Edge 网站数据说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>Mozilla Firefox</summary>
+              <p>打开「设置 → 隐私与安全」，找到「Cookie 和网站数据」或「浏览数据」，进入「管理数据」或「清除指定网站的数据」的列表。在列表里搜索并记录结果。</p>
+              <div class="sources"><a href="https://support.mozilla.org/en-US/kb/storage" target="_blank" rel="noopener noreferrer">Firefox 网站数据说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>Brave</summary>
+              <p>切到要查的用户配置，在地址栏输入 <code>brave://settings/content/all</code>。也可从隐私和安全设置下的「网站和防护设置」寻找网站数据列表。</p>
+              <div class="sources"><a href="https://support.brave.app/hc/en-us/articles/360048833872-How-Do-I-Clear-Cookies-And-Site-Data-In-Brave" target="_blank" rel="noopener noreferrer">Brave 网站数据说明</a></div>
+            </details>
+            <details name="browser-check">
+              <summary>其他已安装的浏览器</summary>
+              <p>从浏览器设置搜索「网站数据」或「站点数据」，打开按网站列出的列表。多用户配置、其他系统用户或浏览器存档超出本轮访问范围时，记录具体范围。</p>
+            </details>
+          </div>
+          <p class="browser-note">这一步只搜索和记录。找到网站数据表示当前列表里有本地记录，登录会话是否仍有效需要另外核实。</p>
         </div>
         <div class="details-stack">
           <details class="codex-action">
             <summary>交给 Codex</summary>
-            <p class="codex-prompt">在我指定的浏览器及用户配置里只读查找 Claude 与 Anthropic 的网站数据，按配置报告结果，保留已打开的标签页和登录状态。</p>
+            <p class="codex-prompt">先只读列出这台电脑上已安装或有可访问用户配置的浏览器，优先核对 Safari、Chrome 和 Comet，也覆盖 Edge、Firefox、Brave 及其他实际安装的浏览器。逐个可访问的用户配置查询 Claude 和 Anthropic 的网站数据。按浏览器及配置报告「发现」「未发现」「未核验」或「未安装」，只报告域名和状态，保留已打开的标签页、网站数据和登录状态。</p>
             <button class="copy-command" type="button" hidden>复制给 Codex</button>
             <span class="copy-status" role="status"></span>
           </details>
