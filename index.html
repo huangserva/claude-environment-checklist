@@ -188,6 +188,15 @@ summary:hover { color: var(--verm); }
 .audit-coverage li p, .audit-browser-list li p { color: var(--muted); font-size: 13px; }
 .audit-coverage .status, .audit-browser-list .status { margin: 0 0 0 7px; }
 .audit-detail { margin-top: 12px; }
+.audit-review { margin-top: 10px; padding: 9px 11px; border: 1px solid var(--line); }
+.audit-review textarea {
+  display: block; width: 100%; margin: 4px 0 10px; padding: 7px; min-height: 6rem;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); resize: vertical;
+}
+.audit-review label { display: block; margin-top: 8px; font-weight: 650; }
+.audit-review-result { margin-top: 8px; }
+.audit-review-result ol { padding-left: 22px; }
+.audit-review-result li { margin-bottom: 8px; overflow-wrap: anywhere; }
 .audit-all { margin-top: 5px; padding: 0; border: 0; background: transparent; text-decoration: underline; color: var(--moss); cursor: pointer; }
 .audit-results { margin-top: 8px; max-height: 28rem; overflow: auto; }
 .audit-results table { width: 100%; min-width: 560px; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
@@ -385,6 +394,30 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
             </div>
             <p id="audit-summary-note"></p>
             <ul class="audit-breakdown" id="audit-breakdown" hidden></ul>
+            <details class="audit-review" id="audit-review">
+              <summary id="audit-review-title">逐条复核</summary>
+              <p>Codex 按本次编号逐条填写证据和结论。结果只显示在当前页面。</p>
+              <div id="audit-review-inputs" hidden>
+                <details id="audit-review-editor" open>
+                  <summary>复核清单与回填</summary>
+                  <label for="audit-review-queue">本次复核清单</label>
+                  <textarea id="audit-review-queue" readonly rows="5" spellcheck="false"></textarea>
+                  <label for="audit-review-entry">Codex 复核结果</label>
+                  <textarea id="audit-review-entry" rows="5" spellcheck="false" autocomplete="off"></textarea>
+                  <button class="copy-command" id="audit-review-submit" type="button">核对并显示复核结果</button>
+                </details>
+                <p class="audit-status" id="audit-review-status" role="status"></p>
+                <div class="audit-review-result" id="audit-review-result" hidden>
+                  <p id="audit-review-totals"></p>
+                  <p id="audit-read-sources"></p>
+                  <p id="audit-old-sources"></p>
+                  <details>
+                    <summary>查看逐条结论</summary>
+                    <ol id="audit-review-rows"></ol>
+                  </details>
+                </div>
+              </div>
+            </details>
             <div class="audit-next">
               <a href="#identity-context">核对配置、记忆与外接工具</a>
               <a href="#network-egress">检查实际公网出口</a>
@@ -895,6 +928,124 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
     document.querySelector('#audit-controls').hidden = false;
 
     const statusLabels = {'启动候选': '启动时可能读取', '按条件': '满足条件时使用'};
+    const reviewVerdicts = new Map([
+      ['read', '已证实当前会话读取'],
+      ['configured', '已配置，实际读取待核验'],
+      ['historical', '仅历史留存'],
+      ['example_or_duplicate', '模板或重复记录'],
+      ['insufficient', '证据不足']
+    ]);
+
+    function renderReview(report) {
+      const panel = document.querySelector('#audit-review');
+      const title = document.querySelector('#audit-review-title');
+      const queue = document.querySelector('#audit-review-queue');
+      const entry = document.querySelector('#audit-review-entry');
+      const editor = document.querySelector('#audit-review-editor');
+      const status = document.querySelector('#audit-review-status');
+      const result = document.querySelector('#audit-review-result');
+      const findings = report.results.filter(finding => finding.review_id);
+      const sources = new Map(findings.map(finding => [finding.review_id, finding]));
+      const total = sources.size;
+      title.textContent = total ? `逐条复核 · 0 / ${total} 条` : '逐条复核 · 暂无标记项';
+      panel.open = false;
+      document.querySelector('#audit-review-inputs').hidden = total === 0;
+      editor.open = true;
+      entry.value = '';
+      status.textContent = '';
+      result.hidden = true;
+      result.querySelector('details').open = false;
+      queue.value = JSON.stringify({
+        scan_id: report.scan_id,
+        items: findings.map(({review_id, category, source, status, detail}) =>
+          ({id: review_id, category, source, status, detail}))
+      }, null, 2);
+
+      document.querySelector('#audit-review-submit').onclick = () => {
+        let submission;
+        try {
+          submission = JSON.parse(entry.value);
+        } catch {
+          status.textContent = '结果格式无法读取，请提交清单所属的复核结果。';
+          return;
+        }
+        if (submission?.scan_id !== report.scan_id || !Array.isArray(submission.reviews)) {
+          status.textContent = '结果属于另一轮检查，或缺少本轮复核清单。';
+          return;
+        }
+        const reviewed = new Map();
+        const hasText = value => typeof value === 'string' && value.trim().length > 0;
+        for (const item of submission.reviews) {
+          if (!sources.has(item?.id) || reviewed.has(item.id)) {
+            status.textContent = '结果包含未知或重复编号，请核对本次清单。';
+            return;
+          }
+          if (!reviewVerdicts.has(item.verdict) || !hasText(item.evidence) || !hasText(item.conclusion)) {
+            status.textContent = `${item.id} 缺少有效的证据或结论。`;
+            return;
+          }
+          if (item.verdict === 'read' &&
+              (!['context_record', 'successful_read'].includes(item.session_evidence?.kind) ||
+               !hasText(submission.target_session) ||
+               item.session_evidence.session_ref !== submission.target_session ||
+               !hasText(item.session_evidence.reference))) {
+            status.textContent = `${item.id} 缺少当前会话的直接读取证据。`;
+            return;
+          }
+          if (item.old_evidence != null && (item.verdict !== 'read' || !hasText(item.old_evidence))) {
+            status.textContent = `${item.id} 的旧资料判定需要读取证据和历史来源依据。`;
+            return;
+          }
+          reviewed.set(item.id, item);
+        }
+        if (reviewed.size !== total) {
+          status.textContent = `收到 ${reviewed.size} / ${total} 条结果，补齐遗漏编号后才能完成。`;
+          return;
+        }
+
+        const counts = new Map([...reviewVerdicts.keys()].map(key => [key, 0]));
+        const readSources = new Set();
+        const oldSources = new Set();
+        const rows = document.createDocumentFragment();
+        for (const [id, finding] of sources) {
+          const item = reviewed.get(id);
+          counts.set(item.verdict, counts.get(item.verdict) + 1);
+          if (item.verdict === 'read') readSources.add(finding.source);
+          if (item.old_evidence) oldSources.add(finding.source);
+          const row = document.createElement('li');
+          const heading = document.createElement('strong');
+          heading.textContent = `${id} · ${finding.category} · ${finding.source} · ${reviewVerdicts.get(item.verdict)}`;
+          const reason = document.createElement('p');
+          reason.textContent = '标记原因 · ' + finding.detail;
+          const evidence = document.createElement('p');
+          evidence.textContent = '证据 · ' + (item.verdict === 'read'
+            ? `${item.evidence}（会话 ${item.session_evidence.session_ref} · ${item.session_evidence.reference}）`
+            : item.evidence);
+          const conclusion = document.createElement('p');
+          conclusion.textContent = '结论 · ' + item.conclusion;
+          row.append(heading, reason, evidence, conclusion);
+          if (item.old_evidence) {
+            const history = document.createElement('p');
+            history.textContent = '旧资料依据 · ' + item.old_evidence;
+            row.append(history);
+          }
+          rows.append(row);
+        }
+        document.querySelector('#audit-review-rows').replaceChildren(rows);
+        document.querySelector('#audit-review-totals').textContent = [...counts]
+          .map(([key, count]) => `${reviewVerdicts.get(key)} ${count} 条`).join(' · ');
+        document.querySelector('#audit-read-sources').textContent = readSources.size
+          ? `已证实读取的来源（${readSources.size} 处） · ${[...readSources].join('、')}`
+          : '本轮未取得当前会话读取这些来源的直接证据。';
+        document.querySelector('#audit-old-sources').textContent = oldSources.size
+          ? `已证实读取的旧资料（${oldSources.size} 处） · ${[...oldSources].join('、')}`
+          : '本轮未取得当前会话读取旧资料的直接证据。';
+        title.textContent = `逐条复核 · ${total} / ${total} 条`;
+        status.textContent = `复核完成 · ${total} / ${total} 条`;
+        editor.open = false;
+        result.hidden = false;
+      };
+    }
 
     function renderFindings(findings) {
       const rows = document.createDocumentFragment();
@@ -922,7 +1073,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         const reason = finding.identity_clue ? 'identity' : finding.review_kind;
         const review = reviewCategories[reason];
         if (review) review.count += 1;
-        const group = review ? 'review' : finding.status === '未核验' ? 'pending' : 'inventory';
+        const group = finding.review_id ? 'review' : finding.status === '未核验' ? 'pending' : 'inventory';
         groups[group].push(finding);
       }
       const verdict = document.querySelector('#audit-verdict');
@@ -1011,6 +1162,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           return;
         }
         renderSummary(report.results);
+        renderReview(report);
         renderCoverage(report);
         const cleanup = report.cleanup_audit;
         const note = cleanup.scope

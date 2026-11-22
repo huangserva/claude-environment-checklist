@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import sys
+from uuid import uuid4
 
 from browser_checks import children, inspect_browsers
 
@@ -54,6 +55,10 @@ def add_local_checks(report, home):
             "category": "浏览器站点留存", "source": f"{item['browser']} · {item['profile']}",
             "status": "仅留存", "detail": item["detail"], "review_kind": "browser",
         })
+    report["scan_id"] = str(uuid4())
+    marked = (row for row in report["results"] if row.get("identity_clue") or row.get("review_kind"))
+    for number, row in enumerate(marked, 1):
+        row["review_id"] = f"R{number:03d}"
     report["browsers"] = browsers
     report["coverage"] = [
         check("network-egress", "Claude 公网出口",
