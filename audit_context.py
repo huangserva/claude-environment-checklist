@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Read-only inventory of local Claude instructions, memories and connectors."""
+"""Read-only Claude environment, instructions, memories and connector audit."""
 
 import sys
 
 sys.dont_write_bytecode = True
 
 import argparse
+import glob
 import json
 import os
 from pathlib import Path
 import re
 import stat
+import subprocess
 
 START = "启动候选"
 CONDITIONAL = "按条件"
@@ -43,6 +45,167 @@ PROVIDER_FIELDS = (
     "CLAUDE_CODE_USE_ANTHROPIC_AWS", "CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD", "CLAUDE_CODE_USE_MANTLE",
     "CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST",
 )
+
+
+# Read-only discovery from suyuan2022/suyuan-skill/claude-cleanup.
+# Upstream revision: 8babd4557a4774ca8e3d5b784d82f0ee5a4565e5
+#
+# MIT License
+#
+# Copyright (c) 2026 Suyuan
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+TELEMETRY_KEYS = ("DISABLE_TELEMETRY", "DISABLE_ERROR_REPORTING", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+CLI_CACHE = ("cache", "stats-cache.json", "telemetry", "usage-data", "usage.jsonl", "usage.with-fix.jsonl")
+SAFE_RELATIVE = ("Library/Caches/claude-cli-nodejs", "Library/Logs/Claude")
+SAFE_GLOBS = (
+    "Library/Caches/com.anthropic.claudefordesktop*", "Library/Logs/DiagnosticReports/Claude*",
+    "Library/Application Support/CrashReporter/Claude*",
+)
+DESKTOP_RELATIVE = (
+    "Library/Application Support/Claude", "Library/Application Support/Claude-3p",
+    "Library/Application Support/com.anthropic.claudefordesktop",
+    "Library/HTTPStorages/com.anthropic.claudefordesktop",
+    "Library/Preferences/com.anthropic.claudefordesktop.plist",
+    "Library/Saved Application State/com.anthropic.claudefordesktop.savedState",
+    "Library/WebKit/com.anthropic.claudefordesktop",
+)
+DESKTOP_GLOBS = ("Library/Preferences/ByHost/com.anthropic.claudefordesktop*.plist",)
+
+def cleanup_discover(home: Path) -> tuple[list[Path], list[Path]]:
+    claude = home / ".claude"
+    safe = [claude / name for name in CLI_CACHE]
+    safe += [home / name for name in SAFE_RELATIVE]
+    desktop = [home / name for name in DESKTOP_RELATIVE]
+    for pattern in SAFE_GLOBS:
+        safe += map(Path, glob.glob(str(home / pattern)))
+    for pattern in DESKTOP_GLOBS:
+        desktop += map(Path, glob.glob(str(home / pattern)))
+    safe = {p for p in safe if p.exists() or p.is_symlink()}
+    desktop = {p for p in desktop if p.exists() or p.is_symlink()}
+    return sorted(safe, key=str), sorted(desktop, key=str)
+
+
+def cleanup_timezone() -> str:
+    try:
+        target = Path("/etc/localtime").readlink().as_posix()
+    except OSError:
+        return "未知"
+    return target.split("/zoneinfo/", 1)[1] if "/zoneinfo/" in target else "未知"
+
+
+def cleanup_process_count():
+    """Count the same processes as the original audit using a fixed system command."""
+    try:
+        result = subprocess.run(
+            ["/bin/ps", "-axo", "pid=,comm=,args="],
+            capture_output=True, text=True, errors="replace", timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode:
+        return None
+    count = 0
+    for line in result.stdout.splitlines():
+        parts = line.strip().split(maxsplit=2)
+        if len(parts) < 2 or parts[0] == str(os.getpid()):
+            continue
+        command = Path(parts[1]).name.lower()
+        args = parts[2] if len(parts) == 3 else ""
+        first = Path(args.split(maxsplit=1)[0]).name.lower() if args else ""
+        if command in {"claude", "claude-code"} or first in {"claude", "claude-code"} or "/Claude.app/" in args:
+            count += 1
+    return count
+
+
+def cleanup_audit(audit, home):
+    if sys.platform != "darwin":
+        return {"status": "不适用", "detail": "原版审计使用 macOS 的目录和进程规则"}
+
+    try:
+        cache, desktop = cleanup_discover(home)
+        config_exists = (home / ".claude").is_dir()
+        profile_exists = (home / ".claude.json").is_file()
+        app_exists = Path("/Applications/Claude.app").exists()
+    except OSError:
+        return {"status": UNKNOWN, "detail": "无法核对原版审计的默认目录"}
+
+    settings = home / ".claude/settings.json"
+    try:
+        settings.lstat()
+    except FileNotFoundError:
+        env = {}
+    except OSError:
+        env = None
+    else:
+        data = audit.json_file(settings, "原版审计的用户设置")
+        env = data.get("env", {}) if data is not None else None
+        if not isinstance(env, dict):
+            env = None
+
+    disabled, simple = None, None
+    if env is not None:
+        disabled = [key for key in TELEMETRY_KEYS if str(env.get(key, "")).lower() in {"1", "true", "yes", "on"}]
+        simple = str(env.get("CLAUDE_CODE_SIMPLE", "")).lower() in {"1", "true"}
+    processes = cleanup_process_count()
+    timezone = cleanup_timezone()
+    status = "已审计" if env is not None and processes is not None and timezone != "未知" else "部分未核验"
+    return {
+        "status": status,
+        "scope": "macOS 默认目录",
+        "default_config_directory_present": config_exists,
+        "default_profile_present": profile_exists,
+        "desktop_app_present": app_exists,
+        "related_process_count": processes,
+        "cache_log_candidates": [audit.path_label(path) for path in cache],
+        "desktop_data_candidates": [audit.path_label(path) for path in desktop],
+        "disabled_telemetry_keys": disabled,
+        "simple_mode": simple,
+        "timezone": timezone,
+    }
+
+
+def print_cleanup(result):
+    print("\n原版 claude-cleanup 的只读审计")
+    print(f"【{result['status']}】{result.get('detail') or result['scope']}")
+    if "scope" not in result:
+        return
+    for key, label in (
+        ("default_config_directory_present", "~/.claude"),
+        ("default_profile_present", "~/.claude.json"),
+        ("desktop_app_present", "系统应用目录中的 Claude"),
+    ):
+        print(f"  {label}：{'存在' if result[key] else '未发现'}")
+    processes = result["related_process_count"]
+    print(f"  相关进程：{processes if processes is not None else '未核验'}")
+    for key, label in (
+        ("cache_log_candidates", "可再生缓存和日志候选"),
+        ("desktop_data_candidates", "桌面端持久数据位置"),
+    ):
+        print(f"  {label}：{len(result[key])} 项")
+        for path in result[key]:
+            print(f"    {path}")
+    disabled = result["disabled_telemetry_keys"]
+    print("  遥测关闭字段：" + ("未核验" if disabled is None else "、".join(disabled) or "未发现"))
+    simple = result["simple_mode"]
+    print("  精简模式：" + ("未核验" if simple is None else "已启用" if simple else "未启用"))
+    print(f"  系统时区：{result['timezone']}")
 
 
 def inside(path, root):
@@ -481,7 +644,7 @@ def main():
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="backslashreplace")
-    parser = argparse.ArgumentParser(description="Claude 配置、记忆和身份来源只读检查")
+    parser = argparse.ArgumentParser(description="Claude 本机只读审计与配置、记忆及外接工具检查")
     parser.add_argument("--project", type=Path, default=Path.cwd(), help="Claude 实际工作的目录")
     parser.add_argument("--config-dir", type=Path, help="Claude 实际使用的配置目录")
     parser.add_argument("--settings", type=Path, action="append", default=[], help="补查启动设置文件，可重复")
@@ -506,15 +669,19 @@ def main():
         if desktop is not None:
             extra.append(desktop.resolve())
         audit = Audit(home, work, project, config, managed, extra, args.backup_dir)
+        cleanup = cleanup_audit(audit, home)
         audit.inventory(home, work, project, config, managed, desktop, args)
     except (OSError, RuntimeError, ValueError):
         print("检测无法完成：工作目录或配置路径不可访问。", file=sys.stderr)
         return 2
 
     if args.json:
-        print(json.dumps({"mode": "read-only", "results": audit.rows}, ensure_ascii=False, indent=2))
+        print(json.dumps({"mode": "read-only", "cleanup_audit": cleanup, "results": audit.rows},
+                         ensure_ascii=False, indent=2))
     else:
-        print("Claude 配置、记忆和身份来源 · 只读检测")
+        print("Claude 本机环境 · 只读检测")
+        print_cleanup(cleanup)
+        print("\n配置、记忆和外接工具检查")
         print("静态文件结论以候选、可配置或留存标注。实际加载、连接和访问以会话证据为准。")
         for row in audit.rows:
             print(f"【{row['status']}】{row['category']} · {row['source']}")

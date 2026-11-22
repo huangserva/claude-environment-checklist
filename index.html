@@ -388,14 +388,14 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           <p>常见漏项是全局配置里的外部记忆连接，以及项目历史里的首条提示词。即使项目说明没有身份信息，也要把配置、记忆和已连接的工具分别检查。</p>
         </div>
         <div class="todo">
-          <h3>一条命令做只读检测</h3>
-          <p>从下方下载脚本，保存到下载目录。打开终端，进入 Claude 实际工作的项目，按操作系统运行一条命令。需要本机有 Python 3。</p>
-          <p class="sources"><a href="audit_context.py" download>下载只读检测脚本</a></p>
+          <h3>一条命令运行整合审计</h3>
+          <p>下载下方这一个文件，保存到下载目录。打开终端，进入 Claude 实际工作的项目。macOS 会同时运行原版 <code>claude-cleanup</code> 的只读审计和本手帖的配置、记忆及外接工具检查。只需本机有 Python 3。</p>
+          <p class="sources"><a href="audit_context.py" download>下载整合版只读脚本</a></p>
           <p>macOS 或 Linux</p>
           <pre><code>python3 -B "$HOME/Downloads/audit_context.py"</code></pre>
           <p>Windows 的 PowerShell</p>
           <pre><code>py -3 -B "$HOME\Downloads\audit_context.py"</code></pre>
-          <p class="check-note"><code>-B</code> 让 Python 不生成字节码缓存。若脚本保存在其他位置，把命令中的路径换成实际路径。脚本只在终端显示来源、状态和线索类型，不调用 Claude 或外接工具。</p>
+          <p class="check-note"><code>-B</code> 让 Python 不生成字节码缓存。Windows 与 Linux 会执行配置检查，原版的 macOS 审计标为「不适用」。脚本只在终端报告发现。它没有清理入口。</p>
           <details>
             <summary>如何读检测结果</summary>
             <p>「启动候选」表示路径或配置可能使文件在启动时载入。「按条件」表示与项目、路径、插件或会话状态相关。「已配置」表示找到了设置或工具声明。「仅留存」表示发现历史、本机凭据文件或备份。「未核验」表示静态文件无法确认的会话、账号或访问范围。</p>
@@ -515,18 +515,17 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         </div>
         <div class="todo">
           <h3>核对步骤</h3>
-          <p>macOS 用户可使用 <code>claude-cleanup</code> 做只读审计。其他系统先按本机客户端版本确认位置。需要执行清理时，先正常退出客户端，备份后核对具体范围。</p>
+          <p>macOS 的原版 <code>claude-cleanup</code> 审计已整合进第 2 项的脚本。运行一次即可列出缓存和日志候选、桌面端数据位置、相关进程数及其他审计状态。</p>
           <details>
-            <summary>macOS 的只读审计指令</summary>
-            <p>获取并核对工具源码后，从工具说明文件所在的目录运行下方命令。<code>--audit</code> 只列出检测结果。</p>
-            <pre><code>python3 scripts/claude_cleanup.py --audit</code></pre>
-            <div class="sources"><a href="https://github.com/suyuan2022/suyuan-skill/blob/8babd4557a4774ca8e3d5b784d82f0ee5a4565e5/claude-cleanup/SKILL.md" target="_blank" rel="noopener noreferrer">已核对版本的工具说明</a></div>
+            <summary>查看整合审计的范围</summary>
+            <p>原版审计盘点 macOS 的默认目录。实际使用的项目和自定义配置目录由同一脚本的配置检查部分另外核对。桌面端数据位置和缓存候选只作只读记录。</p>
+            <div class="sources"><a href="#identity-context">查看下载与运行命令</a> · <a href="https://github.com/suyuan2022/suyuan-skill/blob/8babd4557a4774ca8e3d5b784d82f0ee5a4565e5/claude-cleanup/SKILL.md" target="_blank" rel="noopener noreferrer">原版来源与用法</a></div>
           </details>
         </div>
         <div class="details-stack">
           <details class="codex-action">
             <summary>交给 Codex</summary>
-            <p class="codex-prompt">按我的操作系统和 Claude 客户端版本，只读列出明确可再生的缓存及日志，报告路径和大小。待我明确授权后，再按本机适用流程处理并复查。</p>
+            <p class="codex-prompt">按我的操作系统和 Claude 客户端版本，只读核对缓存与日志。macOS 上可运行手帖第 2 项的整合脚本，报告原版审计与配置检查的结果。保留全部文件和当前 Claude 状态。</p>
             <button class="copy-command" type="button" hidden>复制给 Codex</button>
             <span class="copy-status" role="status"></span>
           </details>
