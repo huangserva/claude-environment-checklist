@@ -220,7 +220,7 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
 .route-options a, .sources a { color: var(--moss); text-underline-offset: 3px; }
 .browser-options { margin-top: 14px; }
 .browser-options .sources { margin-top: 6px; }
-.browser-note { margin-top: 10px; color: var(--muted); }
+.check-note { margin-top: 10px; color: var(--muted); }
 .evidence-check { margin-top: 13px; padding: 10px 13px; background: #f4f0e6; }
 .evidence-check label { color: var(--moss); font-size: 13px; font-weight: 650; display: block; }
 .evidence-check select {
@@ -262,33 +262,38 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
           <span><span class="index-title">Claude 公网出口</span><span class="index-state">先检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
-        <li><a href="#old-backup">
+        <li><a href="#identity-context">
           <span class="index-no">02</span>
+          <span><span class="index-title">配置、记忆与身份来源</span><span class="index-state">重点检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#old-backup">
+          <span class="index-no">03</span>
           <span><span class="index-title">完整备份</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
         <li><a href="#sessions">
-          <span class="index-no">03</span>
+          <span class="index-no">04</span>
           <span><span class="index-title">会话归档</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
         <li><a href="#cache">
-          <span class="index-no">04</span>
+          <span class="index-no">05</span>
           <span><span class="index-title">缓存和日志</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
         <li><a href="#desktop">
-          <span class="index-no">05</span>
+          <span class="index-no">06</span>
           <span><span class="index-title">桌面应用数据</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
         <li><a href="#credentials">
-          <span class="index-no">06</span>
+          <span class="index-no">07</span>
           <span><span class="index-title">命令行登录凭据</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
         <li><a href="#browser-data">
-          <span class="index-no">07</span>
+          <span class="index-no">08</span>
           <span><span class="index-title">浏览器会话</span><span class="index-state">按需检查</span></span>
           <span class="index-arrow" aria-hidden="true">›</span>
         </a></li>
@@ -352,6 +357,72 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           <details class="codex-action">
             <summary>交给 Codex</summary>
             <p class="codex-prompt">只读核对我使用的 Claude 客户端实际走的网络线路。先根据我的系统和网络工具查已有连接，再用同一出口的检测请求核对公网地址。分别标出规则、实际连接和检测站回显；没有同线路证据时标为未核实。保留当前网络配置与登录。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="identity-context" data-state="local" aria-labelledby="identity-context-title">
+        <header class="sheet-head">
+          <h2 id="identity-context-title" tabindex="-1">配置、记忆与身份来源</h2>
+          <span class="status warn">重点检查</span>
+        </header>
+        <div class="readout">
+          <strong>查清 Claude 在哪里读到你的身份和偏好</strong>
+          <p>常见漏项是全局配置里的外部记忆连接，以及项目历史里的首条提示词。即使项目说明没有身份信息，也要把配置、记忆和已连接的工具分别检查。</p>
+        </div>
+        <div class="todo">
+          <h3>从实际使用的会话开始</h3>
+          <p>先确认 Claude 的版本、工作目录、是否在远程环境运行，以及用户级配置目录（默认 <code>~/.claude</code>，可通过 <code>CLAUDE_CONFIG_DIR</code> 指定；Windows 默认是 <code>%USERPROFILE%\.claude</code>）。在已打开的 Claude Code 会话中查下面的面板。未运行时，可以只检查文件，无需启动会话来验证。</p>
+          <ol class="steps">
+            <li><code>/status</code> 查看当前会话的设置来源。<code>/context all</code> 对照已经加载的指令和上下文。<code>/memory</code> 查看记忆入口和自动记忆状态。</li>
+            <li><code>/mcp</code> 查看外部工具连接。这里的外部工具协议称为 MCP。只查看名称和状态，避免为验证而调用记忆库或打开带凭据的连接详情。</li>
+            <li>为每条发现标记「已加载」「按条件加载」「可调用」「仅发现留存」或「未核验」。按下列清单核对实际内容、配置来源和触发条件。</li>
+          </ol>
+          <div class="browser-options" aria-label="配置、记忆与身份来源检查清单">
+            <details name="context-check" open>
+              <summary>指令文档和规则</summary>
+              <p>查看组织托管文件、用户级 <code>~/.claude/CLAUDE.md</code>，以及工作目录和各级父目录中的 <code>CLAUDE.md</code>、<code>.claude/CLAUDE.md</code>、<code>CLAUDE.local.md</code>。一并查用户级与项目级的 <code>.claude/rules/</code>、受支持或被引用的 <code>AGENTS.md</code>、<code>.claude/AGENTS.md</code>，以及指令通过 <code>@路径</code> 引用的文件和符号链接目标。</p>
+              <p>工作目录里的指令、下级目录按需加载的指令，以及匹配路径才生效的规则，分别核对。使用额外工作目录时，也查会话是否加载了其中的指令。</p>
+              <div class="sources"><a href="https://code.claude.com/docs/en/memory#choose-where-to-put-claudemd-files" target="_blank" rel="noopener noreferrer">Claude Code 指令加载说明</a></div>
+            </details>
+            <details name="context-check">
+              <summary>自动记忆和会话记录</summary>
+              <p>通过 <code>/memory</code> 定位实际记忆目录。默认位置是 <code>~/.claude/projects/&lt;项目目录&gt;/memory/</code>，也要核对用于指定记忆位置的 <code>autoMemoryDirectory</code>。检查自动加载的索引 <code>MEMORY.md</code> 和可能按需读取的主题文件，特别留意姓名、别名、角色、工作习惯及历史项目。</p>
+              <p>另查是否恢复了旧会话。对于本地聊天记录、<code>history.jsonl</code> 和独立归档，分别记下是否存在、当前会话是否实际引用。</p>
+              <div class="sources"><a href="https://code.claude.com/docs/en/memory#auto-memory" target="_blank" rel="noopener noreferrer">Claude Code 自动记忆说明</a></div>
+            </details>
+            <details name="context-check">
+              <summary>全局状态和配置备份</summary>
+              <p>定位 Claude Code 实际使用的全局状态文件，默认是 <code>~/.claude.json</code>。核对账号资料字段（<code>oauthAccount</code>）、本机用户和设备标识（<code>userID</code>、<code>machineID</code>）、项目记录（<code>projects</code>）和旧项目首条提示词（<code>projects.&lt;项目&gt;.firstPrompt</code>，如存在）。</p>
+              <p>历史副本从 <code>~/.claude.json.backup</code>、实际配置目录的 <code>backups/</code> 和自己创建的备份找。只在本机用已知姓名、别名、邮箱、账号或组织标识核对旧资料。报告记字段名、来源与数量，账号缓存是否写入对话须另有载入证据。</p>
+              <div class="sources"><a href="https://code.claude.com/docs/en/settings#settings-files-and-who-they-affect" target="_blank" rel="noopener noreferrer">Claude Code 设置文件说明</a></div>
+            </details>
+            <details name="context-check">
+              <summary>外接记忆、连接器和插件</summary>
+              <p>对照 <code>/mcp</code>、全局状态文件里的 <code>mcpServers</code> 和 <code>projects.&lt;项目&gt;.mcpServers</code>、项目根目录的 <code>.mcp.json</code>、组织管理的 <code>managed-mcp.json</code>，以及启动时传入的外部工具配置。</p>
+              <p>同时查看已启用插件提供的外部工具、网页账号连接器及桌面端配置（如 <code>claude_desktop_config.json</code>）。记下工具是否已配置、已连接、曾被调用。历史对话里查到的笔记内容，按已有工具调用记录归因。</p>
+              <div class="sources"><a href="https://code.claude.com/docs/en/mcp#understand-mcp-installation-scopes" target="_blank" rel="noopener noreferrer">外部工具的配置层级</a></div>
+            </details>
+            <details name="context-check">
+              <summary>设置、启动参数和自动注入</summary>
+              <p>核对用户级 <code>settings.json</code>、项目的 <code>.claude/settings.json</code> 和 <code>.claude/settings.local.json</code>、组织托管设置（如 <code>managed-settings.json</code>），以及快捷方式、终端脚本、编辑器或封装工具实际传入的启动参数。重点查指定加载设置的 <code>--settings</code>、设置或附加系统提示词的 <code>--system-prompt</code> 和 <code>--append-system-prompt</code> 及对应文件参数、指定代理角色的 <code>--agent</code>、额外目录和会话恢复入口。</p>
+              <p>查看启动钩子 <code>SessionStart</code>、发送提示词前的钩子 <code>UserPromptSubmit</code>，并核对用户级及项目级的技能（<code>skills/</code> 下的 <code>SKILL.md</code>）、自定义命令（<code>commands/</code>）、子代理（<code>agents/</code>）、输出风格（<code>output-styles/</code>）和已启用的插件。按配置定位其读取的文档、脚本和外部工具，只审阅来源。操作系统用户名、主目录和项目路径也可能在会话中被工具看到。</p>
+              <div class="sources"><a href="https://code.claude.com/docs/en/cli-reference#system-prompt-flags" target="_blank" rel="noopener noreferrer">启动参数说明</a> · <a href="https://code.claude.com/docs/en/hooks#sessionstart" target="_blank" rel="noopener noreferrer">启动钩子说明</a></div>
+            </details>
+            <details name="context-check">
+              <summary>网页和桌面端账号侧个性化</summary>
+              <p>在已登录的 Claude 网页或桌面应用里查看「设置 → 你的 Claude」中的个人指令与记忆，旧界面也可能有单独的「记忆」页。进入实际使用的项目，再查项目指令、知识文件和所用连接器。</p>
+              <p>账号侧看不到或本轮无访问权限的内容标为「未核验」。整理公开检查结果时，只写来源和是否有匹配。</p>
+              <div class="sources"><a href="https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context" target="_blank" rel="noopener noreferrer">Claude 账号记忆说明</a> · <a href="https://support.claude.com/en/articles/10185728-understanding-claude-s-personalization-features" target="_blank" rel="noopener noreferrer">Claude 个性化说明</a></div>
+            </details>
+          </div>
+          <p class="check-note">检查结果可以写成「某文件存在旧邮箱字段」「某记忆工具已连接」「某历史备份有旧项目提示词」。保留已授权的档案，涉及移除或断开连接时另行确认范围。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex 做完整只读核对</summary>
+            <p class="codex-prompt">只读核对 Claude 能得知我身份和偏好的来源。先确认实际工作目录、Claude 客户端、用户级配置目录和启动方式，再查各级指令文件、规则与引用、自动记忆、全局状态和历史备份、项目首条提示词、外部记忆工具各级配置、插件及启动钩子。网页或桌面账号侧核对个人指令、记忆与项目知识。按来源报告已加载、按条件加载、可调用、仅发现留存或未核验；只输出路径类别、字段名和计数，保留当前会话、配置与记忆。不要重启 Claude 或调用外部记忆库来测试。</p>
             <button class="copy-command" type="button" hidden>复制给 Codex</button>
             <span class="copy-status" role="status"></span>
           </details>
@@ -525,7 +596,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
               <p>从浏览器设置搜索「网站数据」或「站点数据」，打开按网站列出的列表。多用户配置、其他系统用户或浏览器存档超出本轮访问范围时，记录具体范围。</p>
             </details>
           </div>
-          <p class="browser-note">这一步只搜索和记录。找到网站数据表示当前列表里有本地记录，登录会话是否仍有效需要另外核实。</p>
+          <p class="check-note">这一步只搜索和记录。找到网站数据表示当前列表里有本地记录，登录会话是否仍有效需要另外核实。</p>
         </div>
         <div class="details-stack">
           <details class="codex-action">
