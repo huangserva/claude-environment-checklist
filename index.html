@@ -322,9 +322,10 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
           <details>
             <summary>按应用、域名或规则分流</summary>
             <ol class="steps">
-              <li>在你使用的代理软件、网络网关或企业网络日志里，找 Claude 已有连接。网页版可搜 <code>claude.ai</code>，直连 Anthropic 的命令行可搜 <code>api.anthropic.com</code>。使用其他模型服务时，查实际服务域名。</li>
+              <li>在你使用的代理软件、网络网关或企业网络日志里，找 Claude 已有连接。先查 <code>claude.ai</code> 和 <code>anthropic.com</code>，再按实际记录核对 <code>claude.com</code>、<code>claudeusercontent.com</code>、<code>claude.app</code>、<code>claudemcpcontent.com</code> 及相关子域。使用其他模型服务时，查实际服务域名。</li>
               <li>记录连接命中的线路或节点。让出口检测请求使用这条已配置线路，再核对检测请求的连接记录，确认两者实际经过同一个出网节点或网关。</li>
               <li>核对同一路线后，记录检测站本次回显的公网地址和时间。只能看到代理组名称、看不到最终出网节点时，保留「线路未核实」。同一线路也可能有不同地址，实际结果以本轮检测为准。</li>
+              <li>保留可刷新、可复查的连接记录。主站、实际使用的接口、资源域名及登录服务分别看命中规则。普通网页测速或代理节点延迟只能证明当时那条测试可用。需要排查间歇断线时，对照同一时间的现有应用日志和普通网络测试。</li>
             </ol>
           </details>
           <details>
@@ -339,6 +340,21 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
             <pre><code>curl -q --noproxy "" --proxy "http://127.0.0.1:8080" --max-time 10   --fail --silent --show-error https://ping0.cc/</code></pre>
             <p>这里 <code>--proxy</code> 为检测请求指定代理，<code>--noproxy ""</code> 确保它使用该代理。含账号密码的代理地址请留在自己的配置里。</p>
             <div class="sources"><a href="https://code.claude.com/docs/en/network-config#proxy-configuration" target="_blank" rel="noopener noreferrer">Claude Code 官方代理说明</a> · <a href="https://curl.se/docs/manpage.html" target="_blank" rel="noopener noreferrer">curl 官方命令手册</a></div>
+          </details>
+          <details>
+            <summary>检查域名解析、地址类型和系统时间</summary>
+            <ol class="steps">
+              <li>分开记录系统域名解析服务（DNS）、代理客户端的解析设置，以及浏览器是否启用了独立的加密解析。配置里的解析服务和实际查询结果分别记。代理日志或检测只能证明这一次查询经过的路径。</li>
+              <li>记录检测的是 IPv4（点分地址）还是 IPv6（冒号分隔地址）。两种地址分别核对。另一种地址或线路没有观察到时标「未核验」。</li>
+              <li>在系统「日期和时间」里核对本机时间、时区及是否自动校时。把时间用于对齐连接和错误日志。</li>
+            </ol>
+            <p>需要查看系统解析设置时，macOS 可用 <code>scutil --dns</code>，Windows 的 PowerShell 可用 <code>Get-DnsClientServerAddress</code> 查看各网卡配置的解析服务器。</p>
+            <div class="sources"><a href="https://learn.microsoft.com/en-us/powershell/module/dnsclient/get-dnsclientserveraddress" target="_blank" rel="noopener noreferrer">Windows 解析设置查询说明</a></div>
+          </details>
+          <details>
+            <summary>区分代理故障、浏览器验证和账号停用</summary>
+            <p>优先核对用户遇到问题的客户端、时间和原始提示。若已有命令行记录返回网页验证页或拒绝访问（状态码 <code>403</code>），结论只适用于这次请求。账号状态按实际登录后的提示或平台通知核实。遇到账户停用，保留原通知和时间，按官方渠道查询或申诉。</p>
+            <div class="sources"><a href="https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/" target="_blank" rel="noopener noreferrer">浏览器验证响应说明</a> · <a href="https://support.claude.com/en/articles/8241253-safeguards-warnings-and-appeals" target="_blank" rel="noopener noreferrer">Claude 官方申诉说明</a></div>
           </details>
           <div class="evidence-check" hidden>
             <label for="route-evidence">我已经拿到的证据</label>
@@ -421,6 +437,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
             <details name="context-check">
               <summary>设置、启动参数和自动注入</summary>
               <p>核对用户级 <code>settings.json</code>、项目的 <code>.claude/settings.json</code> 和 <code>.claude/settings.local.json</code>、组织托管设置（如 <code>managed-settings.json</code>），以及快捷方式、终端脚本、编辑器或封装工具实际传入的启动参数。重点查指定加载设置的 <code>--settings</code>、设置或附加系统提示词的 <code>--system-prompt</code> 和 <code>--append-system-prompt</code> 及对应文件参数、指定代理角色的 <code>--agent</code>、额外目录和会话恢复入口。</p>
+              <p>如用过第三方启动器、配置切换器或自定义模型网关，查它们当前选中的配置和历史副本。重点记录指定服务端点的变量 <code>ANTHROPIC_BASE_URL</code>、认证变量（如 <code>ANTHROPIC_AUTH_TOKEN</code>）、读取凭据的辅助脚本设置（<code>apiKeyHelper</code>）是否存在。输出只记录字段与来源，实际使用的是哪套设置要按启动方式核实。</p>
               <p>查看启动钩子 <code>SessionStart</code>、发送提示词前的钩子 <code>UserPromptSubmit</code>，并核对用户级及项目级的技能（<code>skills/</code> 下的 <code>SKILL.md</code>）、自定义命令（<code>commands/</code>）、子代理（<code>agents/</code>）、输出风格（<code>output-styles/</code>）和已启用的插件。按配置定位其读取的文档、脚本和外部工具，只审阅来源。操作系统用户名、主目录和项目路径也可能在会话中被工具看到。</p>
               <div class="sources"><a href="https://code.claude.com/docs/en/cli-reference#system-prompt-flags" target="_blank" rel="noopener noreferrer">启动参数说明</a> · <a href="https://code.claude.com/docs/en/hooks#sessionstart" target="_blank" rel="noopener noreferrer">启动钩子说明</a></div>
             </details>
@@ -454,6 +471,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         <div class="todo">
           <h3>核对步骤</h3>
           <p>核对备份目录能否读取、清单是否一致，并用独立副本校验拟恢复文件。换机器或接手备份时，先复制到新目录验证。</p>
+          <p class="check-note">把「只读审计」「备份已核对」「已处理」和「处理后已复查」分别记下来。后两项应附实际处理范围、跳过或失败项和复查结果。指定保留的会话按自己的归档清单核对。</p>
         </div>
         <div class="details-stack">
           <details class="codex-action">
@@ -526,6 +544,10 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         <div class="todo">
           <h3>核对步骤</h3>
           <p>先查桌面客户端实际使用的站点存储和系统凭据条目，记录位置及存在状态。需要退出登录时，先确定要处理的账号和应用范围。</p>
+          <details>
+            <summary>区分官方应用、第三方外壳及旧副本</summary>
+            <p>确认当前桌面应用的安装来源、版本和是否仍在运行。用过第三方 Claude 外壳或启动器时，另外盘点它自己的程序入口、后台或自启动服务、配置及数据目录。备份或废纸篓里能找到的配置、站点数据和认证资料按历史副本报告，只记录类型和来源。</p>
+          </details>
         </div>
         <div class="details-stack">
           <details class="codex-action">
@@ -548,6 +570,10 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
         <div class="todo">
           <h3>核对步骤</h3>
           <p>检查当地系统的凭据管理器、Claude Code 配置及启动环境。登记凭据来源和查到的状态，避免展示令牌和密码。</p>
+          <details>
+            <summary>核对安装来源及卸载后的命令入口</summary>
+            <p>在实际使用的终端里列出命令解析到的位置。macOS 或 Linux 用 <code>type -a claude</code> 查看可找到的入口；Windows 的 PowerShell 用 <code>Get-Command claude -All</code>。曾同时用多个安装工具时，分别核对各自的安装清单。卸载后在新终端重新核对，并单独记录桌面应用和会话归档的状态。</p>
+          </details>
         </div>
         <div class="details-stack">
           <details class="codex-action">
@@ -572,7 +598,7 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
           <ol class="steps">
             <li>先列出这台电脑上安装和使用过的浏览器。可从 macOS 的「应用程序」、Windows 的「已安装的应用」或 Linux 的应用菜单找。</li>
             <li>按下面的入口打开网站数据列表，分别搜索 <code>claude</code> 和 <code>anthropic</code>。核对完整域名和子域名，例如 <code>claude.ai</code>、<code>claude.com</code>、<code>claudeusercontent.com</code> 和 <code>anthropic.com</code>。</li>
-            <li>按「浏览器 / 用户配置」记录「发现网站数据」「未发现」「未核验」或「未安装」。无法确认某个配置是否在当前列表范围内时，标记「未核验」。</li>
+            <li>按「浏览器 / 用户配置」记录「发现网站数据」「未发现」「未核验」或「未安装」。站点登录数据、浏览历史和恢复的标签页分别记录。无法确认某个配置是否在当前列表范围内时，标记「未核验」。</li>
           </ol>
           <div class="browser-options" aria-label="各浏览器的网站数据入口">
             <details name="browser-check" open>
@@ -610,6 +636,11 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
               <p>从浏览器设置搜索「网站数据」或「站点数据」，打开按网站列出的列表。多用户配置、其他系统用户或浏览器存档超出本轮访问范围时，记录具体范围。</p>
             </details>
           </div>
+          <details>
+            <summary>使用 Gmail 地址时，核对实际登录方式</summary>
+            <p>如果用邮件链接登录，按 Claude 站点数据检查。若选择过「使用 Google 登录」，还可以在 Google 账号的第三方连接里查看授权状态。浏览器站点数据和账号授权分别登记，只读检查保留当前会话。</p>
+            <div class="sources"><a href="https://support.claude.com/en/articles/13189465-log-in-to-your-claude-account" target="_blank" rel="noopener noreferrer">Claude 登录方式</a> · <a href="https://support.google.com/accounts/answer/13533235?hl=zh-Hans" target="_blank" rel="noopener noreferrer">Google 第三方连接说明</a></div>
+          </details>
           <p class="check-note">这一步只搜索和记录。找到网站数据表示当前列表里有本地记录，登录会话是否仍有效需要另外核实。</p>
         </div>
         <div class="details-stack">

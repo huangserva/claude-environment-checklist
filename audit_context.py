@@ -32,9 +32,17 @@ IDENTITY_LABEL = re.compile(
     r"姓名|名字|用户名|邮箱|身份|别名)\s*[:：]", re.I | re.M
 )
 USER_NOTE = re.compile(r"^\s*(?:type|category):\s*['\"]?user\b", re.I | re.M)
-PATH_RULE = re.compile(r"\A---\s*\n[\s\S]*?^paths\s*:", re.M)
+FRONT_MATTER = re.compile(r"\A---[ \t]*\r?\n(.*?)^---[ \t]*(?:\r?\n|\Z)", re.M | re.S)
+PATH_RULE = re.compile(r"^paths\s*:", re.M)
 IMPORT = re.compile(r"(?<![\w@])@((?:\\[ \t]|[^\s<>\"'|\[\](),;，；。])+)")
 FENCE = re.compile(r"^\s*(?:\x60{3,}|~{3,})")
+PROVIDER_FIELDS = (
+    "ANTHROPIC_BASE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+    "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_BEDROCK_BASE_URL", "ANTHROPIC_VERTEX_BASE_URL",
+    "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY",
+    "CLAUDE_CODE_USE_ANTHROPIC_AWS", "CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD", "CLAUDE_CODE_USE_MANTLE",
+    "CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST",
+)
 
 
 def inside(path, root):
@@ -48,6 +56,15 @@ def safe_label(value):
 
 def object_value(value):
     return value if isinstance(value, dict) else {}
+
+
+def visible_lines(text):
+    fenced = False
+    for line in text.splitlines():
+        if FENCE.match(line):
+            fenced = not fenced
+        elif not fenced:
+            yield line
 
 
 def absolute(value):
@@ -85,6 +102,7 @@ class Audit:
         self.extra_files = set(extra_files)
         self.remaining = TOTAL_LIMIT
         self.rows = []
+        self.external_directories = {}
         self.read_cache = {}
         self.documents = set()
         self.enabled_plugins = set()
@@ -96,7 +114,9 @@ class Audit:
                 return label
             if inside(path, root):
                 return safe_label(label + "/" + path.relative_to(root).as_posix())
-        return safe_label("<外部路径>/" + path.name)
+        directory = Path(os.path.abspath(path.parent))
+        number = self.external_directories.setdefault(directory, len(self.external_directories) + 1)
+        return safe_label(f"<外部目录 {number}>/" + path.name)
 
     def add(self, category, source, state, detail):
         row = {
@@ -206,12 +226,18 @@ class Audit:
             return
         self.documents.add(key)
 
-        if PATH_RULE.search(text) and category == "规则":
+        metadata = FRONT_MATTER.match(text)
+        header, body = (metadata.group(1), text[metadata.end():]) if metadata else ("", text)
+        plain_body = "\n".join(visible_lines(body))
+        if PATH_RULE.search(header) and category == "规则":
             status = CONDITIONAL
-        tags = [label for expression, label in (
-            (MAIL, "含邮箱格式"), (IDENTITY_LABEL, "含身份类标签"),
-            (USER_NOTE, "含用户记忆类型标记"),
-        ) if expression.search(text)]
+        tags = []
+        if MAIL.search(text):
+            tags.append("含邮箱格式")
+        if IDENTITY_LABEL.search(plain_body):
+            tags.append("含身份类标签")
+        if category == "自动记忆" and USER_NOTE.search(header):
+            tags.append("含用户记忆类型标记")
         if target != Path(os.path.abspath(path)):
             tags.append("经符号链接")
         flags = "、".join(tags) if tags else "未命中内置身份线索"
@@ -219,13 +245,7 @@ class Audit:
         if not imports:
             return
 
-        fenced = False
-        for line in text.splitlines():
-            if FENCE.match(line):
-                fenced = not fenced
-                continue
-            if fenced:
-                continue
+        for line in plain_body.splitlines():
             for raw in dict.fromkeys(IMPORT.findall(line)):
                 name = raw.replace(r"\ ", " ").rstrip(":：")
                 imported = Path(name).expanduser()
@@ -278,13 +298,24 @@ class Audit:
                 project_status = STORED
             self.tools(path, object_value(entry), scope, project_status)
 
-    def settings(self, path, scope):
+    def provider(self, source, environment, status, has_helper=False):
+        keys = [key for key in PROVIDER_FIELDS if key in environment]
+        if has_helper:
+            keys.append("apiKeyHelper")
+        if keys:
+            self.add("服务端点与认证配置", source, status,
+                     f"存在字段：{'、'.join(keys)}；值及实际采用情况未核验")
+
+    def settings(self, path, scope, status=CONFIGURED):
         data = self.json_file(path, "设置")
         if data is None:
             return
         observed = [k for k in ("env", "hooks", "autoMemoryEnabled", "autoMemoryDirectory",
                                 "claudeMdExcludes", "enabledPlugins") if k in data]
-        self.add("设置", path, CONFIGURED, f"{scope}；相关字段：{'、'.join(observed) or '未见已知字段'}")
+        self.add("设置", path, status, f"{scope}；相关字段：{'、'.join(observed) or '未见已知字段'}")
+        self.provider(path, object_value(data.get("env")), status, "apiKeyHelper" in data)
+        if status == STORED:
+            return
         hooks = object_value(data.get("hooks"))
         for event in ("SessionStart", "UserPromptSubmit"):
             if event in hooks:
@@ -397,6 +428,10 @@ class Audit:
             for path in self.entries(folder, "配置备份"):
                 if path.name.startswith(".claude.json") or path.name in ("claude.json", "claude-code-profile.json"):
                     self.profile(path, STORED)
+        for folder in args.backup_dir:
+            for root in (folder, folder / "dot-claude", folder / "claude-code"):
+                for name in ("settings.json", "settings.local.json", "settings.json.bak"):
+                    self.settings(root / name, "历史设置副本", STORED)
 
         sources = [(project / ".mcp.json", "项目级"), (managed / "managed-mcp.json", "组织管理")]
         if desktop is not None:
@@ -425,6 +460,7 @@ class Audit:
             self.add("本地历史", config / "history.jsonl", STORED, "发现本地历史，正文未读取")
         if (config / ".credentials.json").is_file():
             self.add("登录凭据", config / ".credentials.json", STORED, "凭据文件存在，正文未读取")
+        self.provider("当前检测终端的环境", os.environ, UNKNOWN)
 
         self.add("实际会话", "已有 Claude Code 会话", UNKNOWN,
                  "对照 /status、/context all、/memory 和 /mcp，确认载入、连接与调用状态")
