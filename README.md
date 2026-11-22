@@ -13,7 +13,7 @@
    ```
 
 2. **打开网页。** 在下载得到的 `claude-environment-checklist` 文件夹里，双击 `index.html`。也可以用 Codex 打开这个文件夹，在聊天里选择 `$claude-environment-checklist` 技能并发送，技能会优先打开本地手帖。[查看技能文件](.agents/skills/claude-environment-checklist/SKILL.md)
-3. **选一项检查。** 在网页左侧选条目，照「核对步骤」执行。需要 Codex 帮忙时，展开「交给 Codex」，把复制的指令发到已打开这个项目的 Codex 对话。
+3. **从第 0 步开始。** 首页会先显示「一键只读检查」。复制一条命令到终端运行，或把检查指令发给已经打开本项目的 Codex。配置、会话、登录状态和原文件都会保留。需要查公网出口或浏览器会话时，再从左侧选择对应条目。[预览第 0 步](https://huangserva.github.io/claude-environment-checklist/#quick-audit)
 
 如果你现在只在聊天里贴了 GitHub 链接，可以先发这一句。
 
@@ -21,12 +21,13 @@
 
 [预览网页手帖](https://huangserva.github.io/claude-environment-checklist/)
 
-[![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示公网出口核对步骤](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
+[![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示第 0 步一键只读检查](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
 
 ## 遇到什么问题，从哪一项查
 
 | 遇到的问题 | 建议先看 |
 | --- | --- |
+| 想先了解本机现状，保留所有文件和设置 | [第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)。一次盘点配置、记忆、外接工具和本机会话记录。 |
 | Claude 连不上，或者浏览器和终端的公网出口不同 | [公网出口](https://huangserva.github.io/claude-environment-checklist/#network-egress)。对照 Claude 的已有连接与出口检测请求，确认它们实际走的线路。 |
 | Claude 知道你没在当前对话里提过的姓名、偏好或旧项目 | [配置、记忆与身份来源](https://huangserva.github.io/claude-environment-checklist/#identity-context)。从指令文件、自动记忆、项目记录、插件和外接工具找来源。 |
 | 同一台电脑上的浏览器登录状态不同 | [浏览器会话](https://huangserva.github.io/claude-environment-checklist/#browser-data)。逐个浏览器配置查 Claude 和 Anthropic 的网站数据，另行核验当前登录状态。 |
@@ -42,7 +43,7 @@
 
 ### 在终端独立运行只读脚本
 
-安装 Python 3 后，在下载的 `claude-environment-checklist` 文件夹打开终端，运行其中的脚本。把示例路径换成 Claude 实际工作的项目目录。[配置、记忆与身份来源](https://huangserva.github.io/claude-environment-checklist/#identity-context)
+安装 Python 3 后，在下载的 `claude-environment-checklist` 文件夹打开终端，运行其中的脚本。把示例路径换成 Claude 实际工作的项目目录。[第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)
 
 **macOS 或 Linux**
 
