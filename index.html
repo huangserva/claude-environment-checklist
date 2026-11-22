@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude 使用环境检查手帖</title>
+<style>
+:root {
+  color-scheme: light;
+  --ground: #f4f0e7;
+  --paper: #fffbf3;
+  --ink: #272c25;
+  --muted: #596051;
+  --line: #dcd6c8;
+  --verm: #9b392c;
+  --verm-soft: #f5e6dd;
+  --moss: #395b48;
+  --moss-soft: #e9ede2;
+  --serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-padding-top: 18px; }
+body {
+  margin: 0;
+  min-width: 0;
+  background: radial-gradient(ellipse at 83% 0, #fbf5e9 0, transparent 47%), var(--ground);
+  color: var(--ink);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+a { color: inherit; }
+button { font: inherit; }
+a:focus-visible, button:focus-visible, summary:focus-visible, h2:focus-visible {
+  outline: 2px solid var(--verm);
+  outline-offset: 5px;
+}
+a, button { -webkit-tap-highlight-color: transparent; }
+h1, h2, h3, p { margin: 0; }
+.site { max-width: 1216px; margin: 0 auto; padding: 25px 50px 36px; }
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #bab4a5;
+  color: var(--muted);
+  font-size: 13px;
+}
+.brand { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 650; }
+.masthead time { text-align: right; }
+.seal {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border: 1px solid var(--verm); border-radius: 2px;
+  color: var(--verm); font: 700 17px/1 var(--serif);
+}
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: center;
+  min-height: 164px;
+  gap: 18px;
+  margin: 14px 0 22px;
+  padding: 24px 0 19px;
+  overflow: hidden;
+}
+.hero h1 {
+  font: 700 59px/1.14 var(--serif);
+  font-size: clamp(36px, 5.2vw, 64px);
+  letter-spacing: .012em;
+}
+.hero p { margin-top: 10px; color: var(--muted); }
+.hero-art { width: 100%; height: 132px; overflow: hidden; position: relative; }
+.sun {
+  width: 70px; height: 70px; border-radius: 50%;
+  position: absolute; top: 12px; right: 31px;
+  background: linear-gradient(148deg, #d58e68, #b9553f);
+  opacity: .87;
+}
+.ridges {
+  position: absolute; right: 0; bottom: 0; left: 0;
+  height: 61px; overflow: hidden;
+  opacity: .65;
+}
+.ridges span { position: absolute; border: 1px solid #747b66; border-radius: 48%; }
+.ridges span:nth-child(1) { width: 110%; height: 145%; top: 36%; left: -17%; transform: rotate(-10deg); }
+.ridges span:nth-child(2) { width: 89%; height: 163%; top: 26%; right: -12%; transform: rotate(-13deg); }
+.ridges span:nth-child(3) { width: 84%; height: 145%; top: 52%; right: -3%; transform: rotate(-11deg); }
+.ridges span:nth-child(4) { width: 82%; height: 145%; top: 70%; right: 9%; transform: rotate(-8deg); }
+.layout { display: grid; grid-template-columns: 258px minmax(0, 1fr); gap: 29px; align-items: start; }
+.index { border-top: 2px solid var(--ink); padding-top: 11px; }
+.index h2 { font-size: 16px; letter-spacing: .035em; font-weight: 680; }
+.filters {
+  display: grid; grid-template-columns: repeat(3, 68px);
+  gap: 4px; margin: 11px 0;
+}
+.filters button {
+  background: transparent; border: 1px solid transparent; border-radius: 3px;
+  width: 68px; height: 28px; color: var(--muted); padding: 0 3px;
+  cursor: pointer; font-size: 12px; white-space: nowrap;
+}
+.filters button[aria-pressed="true"] { background: #eee6d8; border-color: #ded3bf; color: var(--ink); }
+.filters button:hover { color: var(--verm); }
+.index ol { padding: 0; margin: 0; list-style: none; }
+.index li { border-bottom: 1px solid var(--line); }
+.index a {
+  display: grid; grid-template-columns: 29px minmax(0, 1fr) 10px; column-gap: 8px;
+  align-items: center; padding: 8px 8px;
+  border-left: 2px solid transparent; text-decoration: none;
+}
+.index a:hover { background: #eee9de; }
+.index a[aria-current="step"] { background: var(--verm-soft); border-left-color: var(--verm); }
+.index-no { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.index-title { display: block; font-size: 14px; line-height: 1.45; font-weight: 620; }
+.index-state { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+.index a[aria-current="step"] .index-no, .index a[aria-current="step"] .index-state { color: var(--verm); }
+.index-arrow { color: var(--verm); opacity: 0; }
+.index a[aria-current="step"] .index-arrow { opacity: 1; }
+
+.reading { min-width: 0; }
+.sheet {
+  background: var(--paper); border: 1px solid var(--line);
+  box-shadow: 0 7px 20px #4b38240c; padding: 24px 30px 22px;
+}
+.sheet:not([hidden]) + .sheet:not([hidden]) { margin-top: 18px; }
+.sheet-head {
+  border-bottom: 1px solid var(--line); padding-bottom: 14px;
+  display: flex; align-items: start; justify-content: space-between; gap: 16px;
+}
+.sheet h2 { font: 700 35px/1.22 var(--serif); font-size: clamp(25px, 3.35vw, 40px); }
+.status {
+  display: inline-block; margin-top: 6px; padding: 2px 8px;
+  border-radius: 2px; font-size: 12px; font-weight: 650; white-space: nowrap;
+  background: #eeeae0; color: var(--muted);
+}
+.status.warn { background: var(--verm-soft); color: var(--verm); }
+.status.ok { background: var(--moss-soft); color: var(--moss); }
+.readout { margin: 16px 0; border-left: 2px solid #9b9c86; background: #f4f0e6; padding: 12px 16px; }
+.readout strong { display: block; font: 700 25px/1.3 var(--serif); color: var(--ink); margin-bottom: 5px; }
+.readout p { color: var(--muted); }
+.todo h3 { color: var(--moss); font-size: 13px; margin-bottom: 3px; }
+.todo > p { max-width: 68ch; }
+.details-stack { margin-top: 15px; padding-top: 11px; border-top: 1px solid var(--line); }
+details { margin: 0; }
+details + details { margin-top: 6px; }
+summary { display: list-item; cursor: pointer; width: fit-content; color: var(--moss); font-weight: 650; }
+summary:hover { color: var(--verm); }
+.codex-action summary {
+  border: 1px solid #d9b5a6;
+  border-radius: 3px;
+  padding: 3px 9px;
+  background: var(--verm-soft);
+  color: var(--verm);
+}
+.codex-prompt { margin: 7px 0; padding: 10px 12px; background: #f4f0e6; overflow-wrap: anywhere; }
+.copy-command {
+  background: var(--verm); border: 1px solid var(--verm); border-radius: 3px;
+  color: #fffaf4; padding: 4px 10px; cursor: pointer; font-size: 13px;
+}
+.copy-command:hover { background: #7e2b20; }
+.copy-status { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.copy-status:empty { display: none; }
+pre {
+  margin: 7px 0 0; padding: 9px 11px; background: #f4f0e6;
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px;
+}
+code { overflow-wrap: anywhere; }
+details > div { color: var(--muted); }
+.pager {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center;
+  margin-top: 13px; font-size: 13px; color: var(--muted);
+}
+.pager a { display: inline-block; padding: 4px 0; text-decoration: none; font-weight: 640; color: var(--ink); }
+.pager a:hover { color: var(--verm); }
+.pager [aria-disabled="true"] { color: var(--muted); opacity: .48; pointer-events: none; }
+#next { justify-self: end; }
+footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px; color: var(--muted); font-size: 12px; }
+
+@media (max-width: 810px) {
+  .site { padding: 18px 22px 26px; }
+  .hero { grid-template-columns: minmax(0, 1fr) 100px; min-height: 110px; margin: 5px 0 16px; padding: 15px 0; gap: 8px; }
+  .hero-art { height: 88px; }
+  .sun { width: 46px; height: 46px; right: 9px; top: 9px; }
+  .ridges { height: 41px; }
+  .hero h1 { font-size: 34px; font-size: clamp(27px, 6.3vw, 46px); }
+  .hero p { font-size: 13px; margin-top: 6px; }
+  .masthead time .year { display: none; }
+  .layout { display: block; }
+  .reading { margin-top: 17px; }
+  .index ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+  .index li { min-width: 0; }
+  .index a { grid-template-columns: 19px minmax(0,1fr) 7px; column-gap: 5px; padding: 7px 5px; }
+  .index-title { font-size: 13px; }
+  .filters { margin: 6px 0; }
+  .sheet { padding: 20px 18px; }
+  .sheet h2 { font-size: 25px; }
+  .readout strong { font-size: 22px; }
+}
+@media (max-width: 370px) {
+  .site { padding-inline: 14px; }
+  .hero { grid-template-columns: minmax(0, 1fr) 64px; }
+  .masthead { font-size: 11px; gap: 6px; }
+  .sheet-head { flex-wrap: wrap; gap: 6px; }
+}
+@media print {
+  .site { max-width: none; padding: 0; }
+  body, .sheet { background: white; }
+  .hero-art, .index, .pager, .copy-command { display: none !important; }
+  .hero, .layout { display: block; }
+  .sheet, .sheet[hidden] { display: block !important; margin-bottom: 14px; box-shadow: none; break-inside: avoid; }
+}
+
+.steps { margin: 8px 0 0; padding-left: 1.4em; }
+.steps li + li { margin-top: 7px; }
+.route-options > details { border-bottom: 1px solid var(--line); padding: 9px 0; }
+.route-options > details:first-child { padding-top: 0; }
+.route-options > details + details { margin-top: 0; }
+.route-options p { margin: 6px 0; }
+.route-options a, .sources a { color: var(--moss); text-underline-offset: 3px; }
+.evidence-check { margin-top: 13px; padding: 10px 13px; background: #f4f0e6; }
+.evidence-check label { color: var(--moss); font-size: 13px; font-weight: 650; display: block; }
+.evidence-check select {
+  width: 100%; max-width: 50ch; margin-block: 5px;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--paper);
+  color: var(--ink); font: inherit; padding: 6px;
+}
+.evidence-check output { display: block; color: var(--muted); font-size: 13px; }
+.sources { margin-top: 10px; color: var(--muted); font-size: 13px; }
+@media (max-width: 810px) {
+  .hero p { overflow-wrap: break-word; }
+}
+</style>
+</head>
+<body>
+<main class="site">
+  <header class="masthead">
+    <span class="brand"><span class="seal" aria-hidden="true">检</span> Claude · 使用环境检查</span>
+    <span>通用版 · 只读核对</span>
+  </header>
+  <div class="hero">
+    <div>
+      <h1>使用环境检查手帖</h1>
+      <p>从公网出口开始，按项核对网络、备份和本机登录数据。</p>
+    </div>
+    <div class="hero-art" aria-hidden="true"><span class="sun"></span><span class="ridges"><span></span><span></span><span></span><span></span></span></div>
+  </div>
+  <div class="layout">
+    <nav class="index" aria-label="检查目录">
+      <h2>检查目录</h2>
+      <div class="filters" aria-label="筛选检查项" hidden>
+        <button type="button" data-filter="all" aria-pressed="true">全部</button>
+        <button type="button" data-filter="network" aria-pressed="false">网络</button>
+        <button type="button" data-filter="local" aria-pressed="false">本机</button>
+      </div>
+      <ol>
+        <li><a href="#network-egress">
+          <span class="index-no">01</span>
+          <span><span class="index-title">Claude 公网出口</span><span class="index-state">先检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#old-backup">
+          <span class="index-no">02</span>
+          <span><span class="index-title">完整备份</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#sessions">
+          <span class="index-no">03</span>
+          <span><span class="index-title">会话归档</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#cache">
+          <span class="index-no">04</span>
+          <span><span class="index-title">缓存和日志</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#desktop">
+          <span class="index-no">05</span>
+          <span><span class="index-title">桌面应用数据</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#credentials">
+          <span class="index-no">06</span>
+          <span><span class="index-title">命令行登录凭据</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+        <li><a href="#browser-data">
+          <span class="index-no">07</span>
+          <span><span class="index-title">浏览器会话</span><span class="index-state">按需检查</span></span>
+          <span class="index-arrow" aria-hidden="true">›</span>
+        </a></li>
+      </ol>
+    </nav>
+    <section class="reading" aria-label="检查详情">
+      <article class="sheet" id="network-egress" data-state="network" aria-labelledby="network-egress-title">
+        <header class="sheet-head">
+          <h2 id="network-egress-title" tabindex="-1">Claude 公网出口</h2>
+          <span class="status warn">先检查</span>
+        </header>
+        <div class="readout">
+          <strong>先认准 Claude 实际走的线路</strong>
+          <p>公网出口地址是外部服务看到的网络地址。检查时以实际使用的 Claude 网页、桌面端或命令行为对象。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+                  <div class="route-options" aria-label="选择核对方式">
+          <details open>
+            <summary>电脑直连，或整机走同一个出口</summary>
+            <ol class="steps">
+              <li>从运行 Claude 的同一台设备、同一网络环境，打开 <a href="https://ping0.cc/" target="_blank" rel="noopener noreferrer">公网地址检测站</a>，记录回显地址和时间。</li>
+              <li>有全设备代理或虚拟专用网络（VPN）时，核对 Claude 使用的应用与检测请求都在它的接管范围内。还要查看应用排除项、浏览器独立代理和命令行代理设置。能查连接记录时，再对照实际走的线路。</li>
+            </ol>
+          </details>
+          <details>
+            <summary>按应用、域名或规则分流</summary>
+            <ol class="steps">
+              <li>在你使用的代理软件、网络网关或企业网络日志里，找 Claude 已有连接。网页版可搜 <code>claude.ai</code>，直连 Anthropic 的命令行可搜 <code>api.anthropic.com</code>。使用其他模型服务时，查实际服务域名。</li>
+              <li>记录连接命中的线路或节点。让出口检测请求使用这条已配置线路，再核对检测请求的连接记录，确认两者实际经过同一个出网节点或网关。</li>
+              <li>核对同一路线后，记录检测站本次回显的公网地址和时间。只能看到代理组名称、看不到最终出网节点时，保留「线路未核实」。同一线路也可能有不同地址，实际结果以本轮检测为准。</li>
+            </ol>
+          </details>
+          <details>
+            <summary>在 Claude Code 的终端里核对</summary>
+            <ol class="steps">
+              <li>在已打开的 Claude Code 会话里输入 <code>/status</code>，看它显示的代理信息。若它在远程主机、容器或虚拟机里运行，切到同一个环境检查。代理配置以实际运行中的会话为准。</li>
+              <li>在同一环境的普通终端运行下方命令。macOS 和 Linux 用第一条；Windows 的 PowerShell 用第二条。输出只代表这条终端检测请求的公网地址。</li>
+            </ol>
+            <pre><code>curl -q --max-time 10 --fail --silent --show-error https://ping0.cc/
+curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code></pre>
+            <p>本地代理提供无需认证的网页代理端口时，可在 macOS 或 Linux 用下方命令明确指定它。先把示例的 <code>8080</code> 换成你的实际端口，再从连接记录确认检测请求和 Claude 命中同一线路。</p>
+            <pre><code>curl -q --noproxy "" --proxy "http://127.0.0.1:8080" --max-time 10   --fail --silent --show-error https://ping0.cc/</code></pre>
+            <p>这里 <code>--proxy</code> 为检测请求指定代理，<code>--noproxy ""</code> 确保它使用该代理。含账号密码的代理地址请留在自己的配置里。</p>
+            <div class="sources"><a href="https://code.claude.com/docs/en/network-config#proxy-configuration" target="_blank" rel="noopener noreferrer">Claude Code 官方代理说明</a> · <a href="https://curl.se/docs/manpage.html" target="_blank" rel="noopener noreferrer">curl 官方命令手册</a></div>
+          </details>
+          <div class="evidence-check" hidden>
+            <label for="route-evidence">我已经拿到的证据</label>
+            <select id="route-evidence">
+              <option value="">请选择</option>
+              <option value="browser">只看到浏览器的检测站回显</option>
+              <option value="terminal">只看到终端命令的回显</option>
+              <option value="group">两个请求同组，最终出网节点未确认</option>
+              <option value="matched">已核对 Claude 与检测请求使用同一出网节点</option>
+            </select>
+            <output for="route-evidence" id="route-result" aria-live="polite">先选一种核对方式，再按现有证据填写结论。</output>
+          </div>
+        </div>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">只读核对我使用的 Claude 客户端实际走的网络线路。先根据我的系统和网络工具查已有连接，再用同一出口的检测请求核对公网地址。分别标出规则、实际连接和检测站回显；没有同线路证据时标为未核实。保留当前网络配置与登录。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="old-backup" data-state="local" aria-labelledby="old-backup-title">
+        <header class="sheet-head">
+          <h2 id="old-backup-title" tabindex="-1">完整备份</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>先确认备份能读，再处理本机数据</strong>
+          <p>备份清单有差异时，先检查拟恢复文件和可用副本。备份对象以本轮确认的实际目录为准。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>核对备份目录能否读取、清单是否一致，并用独立副本校验拟恢复文件。换机器或接手备份时，先复制到新目录验证。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">只读核对我指定的备份和清单。报告实际文件数量、差异和可以独立核实的恢复范围。若有差异，保留原备份和清单。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="sessions" data-state="local" aria-labelledby="sessions-title">
+        <header class="sheet-head">
+          <h2 id="sessions-title" tabindex="-1">会话归档</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>挑出要留的会话，再做逐文件校验</strong>
+          <p>本地 Claude Code 的会话、浏览器里的对话和云端记录各有不同存储位置，应先确认要保留哪一类。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>对本地会话保留独立副本，逐份确认能读取并与原文件比对。需要导出时，复制到新目录，并保留原始会话。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">帮我确认 Claude 本地会话的位置，核对要保留的会话。如果我指定了项目或会话，导出到新目录，再逐文件校验并返回路径。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="cache" data-state="local" aria-labelledby="cache-title">
+        <header class="sheet-head">
+          <h2 id="cache-title" tabindex="-1">缓存和日志</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>按客户端和实际目录识别可清理项目</strong>
+          <p>当前运行中的客户端会持续写入一些缓存和日志。先把范围、项目类型和大小查清楚。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>macOS 用户可使用 <code>claude-cleanup</code> 做只读审计。其他系统先按本机客户端版本确认位置。需要执行清理时，先正常退出客户端，备份后核对具体范围。</p>
+          <details>
+            <summary>macOS 的只读审计指令</summary>
+            <p>获取并核对工具源码后，从工具说明文件所在的目录运行下方命令。<code>--audit</code> 只列出检测结果。</p>
+            <pre><code>python3 scripts/claude_cleanup.py --audit</code></pre>
+            <div class="sources"><a href="https://github.com/suyuan2022/suyuan-skill/blob/8babd4557a4774ca8e3d5b784d82f0ee5a4565e5/claude-cleanup/SKILL.md" target="_blank" rel="noopener noreferrer">已核对版本的工具说明</a></div>
+          </details>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">按我的操作系统和 Claude 客户端版本，只读列出明确可再生的缓存及日志，报告路径和大小。待我明确授权后，再按本机适用流程处理并复查。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="desktop" data-state="local" aria-labelledby="desktop-title">
+        <header class="sheet-head">
+          <h2 id="desktop-title" tabindex="-1">桌面应用数据</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>区分应用设置和站点登录数据</strong>
+          <p>桌面端的数据位置和凭据管理方式随系统和客户端版本变化。检出本地文件只表示对应位置有数据。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>先查桌面客户端实际使用的站点存储和系统凭据条目，记录位置及存在状态。需要退出登录时，先确定要处理的账号和应用范围。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">按我实际使用的 Claude 桌面客户端和系统，只读核对本机站点存储与凭据条目。只输出存在状态，保留当前设置及登录。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="credentials" data-state="local" aria-labelledby="credentials-title">
+        <header class="sheet-head">
+          <h2 id="credentials-title" tabindex="-1">命令行登录凭据</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>在实际运行 Claude Code 的环境里查</strong>
+          <p>本机终端、远程终端和容器可能使用不同配置。检测时只记录发现了哪些凭据来源。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>检查当地系统的凭据管理器、Claude Code 配置及启动环境。登记凭据来源和查到的状态，避免展示令牌和密码。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">在 Claude Code 实际运行的环境中只读核对凭据来源、配置和认证变量是否存在。只报告找到、未找到或无法核实，保留现有登录。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <article class="sheet" id="browser-data" data-state="local" aria-labelledby="browser-data-title">
+        <header class="sheet-head">
+          <h2 id="browser-data-title" tabindex="-1">浏览器会话</h2>
+          <span class="status">按需检查</span>
+        </header>
+        <div class="readout">
+          <strong>逐个浏览器配置查看网站数据</strong>
+          <p>同一浏览器的多个用户配置可有独立的网站数据。曾经登录 Claude 的配置才需要列入检测。</p>
+        </div>
+        <div class="todo">
+          <h3>核对步骤</h3>
+          <p>在浏览器的「隐私」或「网站数据」设置里分别搜索 <code>claude.ai</code> 和 <code>anthropic.com</code>，记录匹配状态。需要移除时，先确认具体浏览器配置和站点。</p>
+        </div>
+        <div class="details-stack">
+          <details class="codex-action">
+            <summary>交给 Codex</summary>
+            <p class="codex-prompt">在我指定的浏览器及用户配置里只读查找 Claude 与 Anthropic 的网站数据，按配置报告结果，保留已打开的标签页和登录状态。</p>
+            <button class="copy-command" type="button" hidden>复制给 Codex</button>
+            <span class="copy-status" role="status"></span>
+          </details>
+        </div>
+      </article>
+      <nav class="pager" aria-label="切换检查项" hidden>
+        <a id="prev" aria-disabled="true">← 上一项</a>
+        <span id="position" role="status"></span>
+        <a id="next" aria-disabled="true">下一项 →</a>
+      </nav>
+    </section>
+  </div>
+  <footer>这份手帖提供通用核对步骤。检测结论要以使用者自己的设备、客户端和实测记录为准。</footer>
+</main>
+<script>
+  const indexLinks = [...document.querySelectorAll('.index ol a')];
+  const items = [...document.querySelectorAll('.sheet')];
+  const filters = document.querySelector('.filters');
+  const filterButtons = [...filters.querySelectorAll('button')];
+  const pager = document.querySelector('.pager');
+  const prev = document.querySelector('#prev');
+  const next = document.querySelector('#next');
+  const position = document.querySelector('#position');
+  let filter = 'all';
+  let active = '';
+
+  function setPagerLink(link, item) {
+    link.setAttribute('aria-disabled', String(!item));
+    if (item) link.setAttribute('href', '#' + item.id);
+    else link.removeAttribute('href');
+  }
+
+  function show(requested, focus = false) {
+    const available = items.filter(item => filter === 'all' || item.dataset.state === filter);
+    const selected = available.find(item => item.id === requested) || available[0];
+    active = selected.id;
+
+    for (const [index, item] of items.entries()) {
+      const link = indexLinks[index];
+      item.hidden = item !== selected;
+      link.parentElement.hidden = !available.includes(item);
+      if (item === selected) link.setAttribute('aria-current', 'step');
+      else link.removeAttribute('aria-current');
+    }
+    for (const button of filterButtons) {
+      button.setAttribute('aria-pressed', String(button.dataset.filter === filter));
+    }
+
+    const index = available.indexOf(selected);
+    position.textContent = `第 ${index + 1} 项，共 ${available.length} 项`;
+    setPagerLink(prev, available[index - 1]);
+    setPagerLink(next, available[index + 1]);
+
+    if (focus) {
+      selected.querySelector('h2').focus({preventScroll: true});
+      if (matchMedia('(max-width: 810px)').matches) selected.scrollIntoView({block: 'start'});
+    }
+  }
+
+  function navigate(id, focus) {
+    show(id, focus);
+    if (location.hash !== '#' + active) history.pushState(null, '', '#' + active);
+  }
+
+  function syncLocation() {
+    const id = location.hash.slice(1);
+    if (filter !== 'all' && items.some(item => item.id === id && item.dataset.state !== filter)) {
+      filter = 'all';
+    }
+    show(id);
+  }
+
+  for (const link of [...indexLinks, prev, next]) {
+    link.addEventListener('click', event => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      const target = link.getAttribute('href');
+      if (target) navigate(target.slice(1), true);
+    });
+  }
+  for (const button of filterButtons) {
+    button.addEventListener('click', () => {
+      filter = button.dataset.filter;
+      navigate(active, false);
+    });
+  }
+  window.addEventListener('hashchange', syncLocation);
+  window.addEventListener('popstate', syncLocation);
+
+  for (const action of document.querySelectorAll('.codex-action')) {
+    const button = action.querySelector('.copy-command');
+    const prompt = action.querySelector('.codex-prompt');
+    const status = action.querySelector('.copy-status');
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(prompt.textContent.trim());
+        status.textContent = '已复制。粘贴到 Codex 聊天即可。';
+      } catch {
+        status.textContent = '请选中上方指令，手动复制到 Codex。';
+      }
+    });
+  }
+
+  const evidenceCheck = document.querySelector('.evidence-check');
+  const evidenceSelect = document.querySelector('#route-evidence');
+  const routeResult = document.querySelector('#route-result');
+  const evidenceResults = {
+    '': '先选一种核对方式，再按现有证据填写结论。',
+    browser: '可记录浏览器检测请求的公网出口。Claude 线路仍待核实。',
+    terminal: '可记录终端检测请求的公网出口。Claude Code 的实际线路仍待核实。',
+    group: '代理组相同。还需要比对实际出网节点或网关。',
+    matched: '可将检测站回显记录为这条已核对线路的实测公网出口。记下检测时间。',
+  };
+  evidenceSelect.addEventListener('change', () => {
+    routeResult.textContent = evidenceResults[evidenceSelect.value];
+  });
+  evidenceCheck.hidden = false;
+
+  syncLocation();
+  filters.hidden = false;
+  pager.hidden = false;
+</script>
+</body>
+</html>
