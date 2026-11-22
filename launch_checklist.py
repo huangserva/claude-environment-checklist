@@ -1,5 +1,6 @@
 """Serve the checklist locally and run the fixed read-only audit on demand."""
 
+import argparse
 import json
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -110,10 +111,14 @@ class ChecklistHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="打开本地只读检查手帖")
+    parser.add_argument("--no-open", action="store_true", help="打印网页地址，由调用方打开浏览器")
+    args = parser.parse_args()
     with ChecklistServer() as server:
         print(f"打开本地手帖 {server.origin}/", flush=True)
         print("关闭这个终端窗口即可退出手帖。", flush=True)
-        Thread(target=webbrowser.open, args=(f"{server.origin}/",), daemon=True).start()
+        if not args.no_open:
+            Thread(target=webbrowser.open, args=(f"{server.origin}/",), daemon=True).start()
         try:
             server.serve_forever()
         except KeyboardInterrupt:

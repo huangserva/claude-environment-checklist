@@ -7,14 +7,14 @@ description: 使用本项目排查 Claude 环境时，先打开下载项目里�
 
 ## 打开网页
 
-先打开下载项目中的本地手帖。第 0 步可用 [本地启动器](../../../launch_checklist.py) 打开，在项目根目录运行 `python3 -B launch_checklist.py`，Windows 使用 `py -3 -B launch_checklist.py`。启动器会打开网页，等用户点击「开始只读检查」才盘点本机。用户只想看手帖时，也可打开 [index.html](../../../index.html)。提到具体问题时，在网页地址后附上对应条目标识。只有用户明确要求执行一项或多项检查时，才按指定范围开始只读检查。
+用户要求用本项目执行第 0 步，按 [README 的 Codex 执行顺序](../../../README.md#给-codex-的执行顺序)操作。使用完整仓库启动器打印的本机地址，打开浏览器并点击「开始只读检查」，等数字出现后从网页交付结果。有明确只读检查请求时，由 Codex 完成这条流程。用户只想浏览时，打开 [index.html](../../../index.html) 或线上预览。提到具体条目时，在网页地址后附上对应标识。
 
 - 一次盘点本机配置、记忆和外接工具 → [第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)。
 - 网络线路和公网出口 → [Claude 公网出口](https://huangserva.github.io/claude-environment-checklist/#network-egress)。
 - 用户身份、记忆、指令文件和外接工具 → [配置、记忆与身份来源](https://huangserva.github.io/claude-environment-checklist/#identity-context)。
 - 浏览器登录数据 → [浏览器会话](https://huangserva.github.io/claude-environment-checklist/#browser-data)。
 
-浏览器无法打开本地文件时，打开[在线手帖](https://huangserva.github.io/claude-environment-checklist/)的对应页面。当前环境无法操作浏览器时，告诉用户在下载文件夹里双击 `index.html` 或给出对应的线上链接。报告页面是否已打开，以工具实际结果为准。
+第 0 步需要浏览器能连到目标电脑上的启动器。遇到阻塞时，报告实际进度和已经取得的本机地址。在线手帖提供浏览预览。
 
 ## 运行本机只读审计
 
@@ -26,4 +26,4 @@ python3 -B "/脚本的绝对路径/audit_context.py" --project "/Claude实际工
 
 `-B` 禁止写入 Python 字节码缓存，`--project` 指定被检查的项目。Windows PowerShell 使用 `py -3 -B` 指定 Python 3。全部检查保持只读，保留原文件、登录状态与会话。
 
-汇总每项发现的来源、状态和下一步核对入口，避免回显文件正文、凭据或会话内容。静态配置只能说明某个来源存在或已声明，实际加载和连接以会话证据为准。公网出口和浏览器会话按手帖的对应页面核对。
+汇总网页显示的建议复核数、未核验数和下一步核对入口。只汇报必要的计数、来源和状态。静态配置只能说明某个来源存在或已声明，实际加载和连接以会话证据为准。用户需要清理时，先核验备份、确定保留的旧会话与明确的处理范围，再按授权逐项处理并复查。

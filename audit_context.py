@@ -281,13 +281,14 @@ class Audit:
         number = self.external_directories.setdefault(directory, len(self.external_directories) + 1)
         return safe_label(f"<外部目录 {number}>/" + path.name)
 
-    def add(self, category, source, state, detail, *, identity_clue=False):
+    def add(self, category, source, state, detail, *, identity_clue=False, review_kind=""):
         row = {
             "category": category,
             "source": self.path_label(source) if isinstance(source, Path) else safe_label(source),
             "status": state,
             "detail": safe_label(detail),
             "identity_clue": identity_clue,
+            "review_kind": review_kind,
         }
         if row not in self.rows:
             self.rows.append(row)
@@ -442,7 +443,8 @@ class Audit:
         for i, name in enumerate(servers, 1):
             name = str(name)
             label = name if re.fullmatch(r"[\w-]{1,64}", name) else f"第 {i} 项"
-            self.add("外接工具", path, status, f"{scope} · {label} · 连接与调用情况未核验")
+            self.add("外接工具", path, status, f"{scope} · {label} · 连接与调用情况未核验",
+                     review_kind="tool" if status == CONFIGURED else "")
 
     def profile(self, path, status, active_paths=(), required=False):
         data = self.json_file(path, "全局状态", required)
@@ -486,7 +488,8 @@ class Audit:
         hooks = object_value(data.get("hooks"))
         for event in ("SessionStart", "UserPromptSubmit"):
             if event in hooks:
-                self.add("钩子", path, CONFIGURED, f"{scope} · {event} · 脚本及返回内容未执行")
+                self.add("钩子", path, CONFIGURED, f"{scope} · {event} · 脚本及返回内容未执行",
+                         review_kind="hook" if hooks[event] else "")
         self.enabled_plugins.update(k for k, v in object_value(data.get("enabledPlugins")).items() if v is True)
         memory = data.get("autoMemoryDirectory")
         if isinstance(memory, str) and memory and (Path(memory).is_absolute() or memory.startswith("~/")):
@@ -529,10 +532,12 @@ class Audit:
                         if "hooks" in entry or isinstance(entry.get("mcpServers"), (str, list)):
                             self.add("插件", path, CONFIGURED, "外部钩子或工具清单需要另核对")
                 if (root / "hooks/hooks.json").is_file():
-                    self.add("钩子", root / "hooks/hooks.json", CONFIGURED, "插件钩子清单")
+                    self.add("钩子", root / "hooks/hooks.json", CONFIGURED, "插件钩子清单",
+                             review_kind="hook")
 
     def inventory(self, home, work, project, config, managed, desktop, args):
         ancestors = (work, *work.parents)
+        has_project = work != Path(work.anchor) and work != home
         for folder in (managed, config, *ancestors):
             for name in INSTRUCTION_NAMES:
                 state = CONDITIONAL if name == "AGENTS.md" else START
@@ -540,7 +545,7 @@ class Audit:
                 if folder in ancestors and name != "CLAUDE.local.md":
                     self.document(folder / ".claude" / name, "指令", state, imports=True)
 
-        if work != Path(work.anchor) and work != home:
+        if has_project:
             for path in self.walk(work, "项目指令"):
                 if path.parent == work:
                     continue
@@ -561,13 +566,14 @@ class Audit:
                     self.document(path, "规则", START, imports=True)
             self.extensions(root, "用户、组织或项目")
 
-        settings_sources = [
-            ("用户级", config / "settings.json"),
-            ("项目级", project / ".claude/settings.json"),
-            ("项目本地", project / ".claude/settings.local.json"),
-            ("组织管理", managed / "managed-settings.json"),
-        ]
-        if work != project:
+        settings_sources = [("用户级", config / "settings.json")]
+        if has_project:
+            settings_sources.extend((
+                ("项目级", project / ".claude/settings.json"),
+                ("项目本地", project / ".claude/settings.local.json"),
+            ))
+        settings_sources.append(("组织管理", managed / "managed-settings.json"))
+        if has_project and work != project:
             settings_sources.extend((
                 ("工作目录候选", work / ".claude/settings.json"),
                 ("工作目录本地候选", work / ".claude/settings.local.json"),

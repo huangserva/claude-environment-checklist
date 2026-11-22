@@ -176,11 +176,12 @@ summary:hover { color: var(--verm); }
 }
 .audit-stat:not(:disabled) { cursor: pointer; }
 .audit-stat:hover:not(:disabled), .audit-stat[aria-pressed="true"] { border-color: var(--moss); }
-.audit-stat[data-audit-group="identity"] { background: var(--verm-soft); color: var(--verm); }
+.audit-stat[data-audit-group="review"] { background: var(--verm-soft); color: var(--verm); }
 .audit-stat strong { display: block; font-size: 25px; font-variant-numeric: tabular-nums; }
 .audit-stat span { display: block; font-size: 13px; }
 .audit-next { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0; color: var(--moss); }
 .audit-cleanup { margin-top: 8px; color: var(--muted); font-size: 13px; }
+.audit-breakdown { margin: 7px 0; padding-left: 20px; }
 .audit-detail { margin-top: 12px; }
 .audit-all { margin-top: 5px; padding: 0; border: 0; background: transparent; text-decoration: underline; color: var(--moss); cursor: pointer; }
 .audit-results { margin-top: 8px; max-height: 28rem; overflow: auto; }
@@ -373,13 +374,14 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
           <div class="audit-report" id="audit-report" hidden>
             <h3 class="audit-verdict" id="audit-verdict" tabindex="-1"></h3>
             <div class="audit-stats" aria-label="检查结果统计">
-              <button type="button" class="audit-stat" data-audit-group="identity" aria-controls="audit-detail" aria-pressed="false"><strong></strong><span>身份线索</span></button>
+              <button type="button" class="audit-stat" data-audit-group="review" aria-controls="audit-detail" aria-pressed="false"><strong></strong><span>建议复核</span></button>
               <button type="button" class="audit-stat" data-audit-group="pending" aria-controls="audit-detail" aria-pressed="false"><strong></strong><span>未核验</span></button>
               <button type="button" class="audit-stat" data-audit-group="inventory" aria-controls="audit-detail" aria-pressed="false"><strong></strong><span>其他记录</span></button>
             </div>
             <p id="audit-summary-note"></p>
+            <ul class="audit-breakdown" id="audit-breakdown" hidden></ul>
             <div class="audit-next">
-              <a href="#identity-context">核对身份与记忆来源</a>
+              <a href="#identity-context">核对配置、记忆与外接工具</a>
               <a href="#network-egress">检查实际公网出口</a>
               <a href="#browser-data">核对浏览器登录</a>
             </div>
@@ -396,6 +398,15 @@ footer { margin-top: 25px; border-top: 1px solid var(--line); padding-top: 10px;
             </details>
           </div>
         </div>
+        <details class="details-stack" id="recovery-plan">
+          <summary>需要整理旧环境？先看备份和复查步骤</summary>
+          <ol class="steps">
+            <li>先核对<a href="#old-backup">独立备份</a>和<a href="#sessions">旧会话</a>。确认副本可读，能恢复你要保留的内容。</li>
+            <li>按报告复核身份和记忆来源。确认哪些配置来自当前项目、哪些只是历史留存。账号和登录状态在实际使用的客户端核对。</li>
+            <li>只处理已经确认要整理的条目。需要改动前，先确定要保留的配置、会话与登录范围。</li>
+            <li>整理后重跑第 0 步，对照前后结果并校验保留的会话。账号停用状态请按<a href="https://support.claude.com/en/articles/8241253-safeguards-warnings-and-appeals" target="_blank" rel="noopener noreferrer">Anthropic 账号申诉说明</a>核对。</li>
+          </ol>
+        </details>
       </article>
       <article class="sheet" id="network-egress" data-state="network" aria-labelledby="network-egress-title">
         <header class="sheet-head">
@@ -886,17 +897,33 @@ curl.exe -q --max-time 10 --fail --silent --show-error https://ping0.cc/</code><
     }
 
     function renderSummary(findings) {
-      const groups = {identity: [], pending: [], inventory: []};
+      const groups = {review: [], pending: [], inventory: []};
+      const reviewCategories = {
+        identity: {label: '身份与记忆线索', count: 0},
+        tool: {label: '已配置外接工具', count: 0},
+        hook: {label: '会话启动或输入时可能运行的钩子', count: 0}
+      };
       for (const finding of findings) {
-        const group = finding.identity_clue ? 'identity' : finding.status === '未核验' ? 'pending' : 'inventory';
+        const reason = finding.identity_clue ? 'identity' : finding.review_kind;
+        const review = reviewCategories[reason];
+        if (review) review.count += 1;
+        const group = review ? 'review' : finding.status === '未核验' ? 'pending' : 'inventory';
         groups[group].push(finding);
       }
       const verdict = document.querySelector('#audit-verdict');
       const note = document.querySelector('#audit-summary-note');
-      verdict.textContent = groups.identity.length ? '发现身份线索，建议复核' : '本次未发现身份线索';
-      note.textContent = groups.identity.length
-        ? '账号字段、邮箱格式或身份标签可能来自正常配置。先核对来源是否符合预期，再确认当前会话是否读取。'
+      verdict.textContent = groups.review.length ? `有 ${groups.review.length} 条记录建议复核` : '本次未发现需要复核的记录';
+      note.textContent = groups.review.length
+        ? '这些线索可能来自正常配置。先对照来源是否符合预期，再核对当前会话实际使用情况。'
         : '本次检查只覆盖本机已有数据。项目指令、当前会话已加载内容等，请查看「未核验」。';
+      const breakdown = document.querySelector('#audit-breakdown');
+      const reviewItems = Object.values(reviewCategories).filter(item => item.count).map(item => {
+        const row = document.createElement('li');
+        row.textContent = `${item.label} ${item.count} 条`;
+        return row;
+      });
+      breakdown.replaceChildren(...reviewItems);
+      breakdown.hidden = reviewItems.length === 0;
       function selectGroup(button = null) {
         const group = button ? groups[button.dataset.auditGroup] : findings;
         const label = button ? button.querySelector('span').textContent : '查看全部明细';
