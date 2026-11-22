@@ -4,6 +4,8 @@ Claude 连不上、突然知道了旧项目里的信息，或者换机前想确�
 
 [打开在线手帖](https://huangserva.github.io/claude-environment-checklist/) · [下载单文件只读检测脚本](https://huangserva.github.io/claude-environment-checklist/#identity-context)
 
+[![Claude 使用环境检查手帖首页，左侧为检查目录，右侧显示公网出口核对步骤](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
+
 ## 遇到什么问题，从哪一项查
 
 | 遇到的问题 | 建议先看 |
