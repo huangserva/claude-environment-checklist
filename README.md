@@ -6,7 +6,7 @@
 
 在**要检查的那台电脑**打开 Codex，把下面这句话连同链接发给它。
 
-> 请用这个项目在当前电脑执行第 0 步。下载完整仓库，打开本地网页并点「开始只读检查」。检查完后逐条复核所有标记项，每条给出来源、证据和结论。最后告诉我复核了多少条、哪些旧资料确实被当前 Claude 会话读取。全程只读。https://github.com/huangserva/claude-environment-checklist
+> 请用这个项目在当前电脑执行第 0 步。下载完整仓库，打开本地网页并点「开始只读检查」。逐条复核所有标记项，查完一批就回填网页，每条给出来源、证据和结论。最后告诉我复核了多少条、哪些旧资料确实被当前 Claude 会话读取。全程只读。https://github.com/huangserva/claude-environment-checklist
 
 ### 给 Codex 的执行顺序
 
@@ -15,7 +15,7 @@
 1. **拿到完整项目。** 用终端克隆下方 GitHub 仓库。在目标电脑已经有此仓库时，确认来源和所需文件齐全后可复用。读取仓库里的 [Codex Skill](.agents/skills/claude-environment-checklist/SKILL.md)。
 2. **启动本地手帖。** 保持启动器进程运行。在仓库目录执行 `python3 -B launch_checklist.py --no-open`，Windows 用 `py -3 -B launch_checklist.py --no-open`。参数 `--no-open` 让启动器只打印本机网页地址，再由 Codex 的浏览器工具打开。参数 `-B` 禁止写入 Python 字节码缓存，Windows 的 `-3` 指定 Python 3。
 3. **打开网页，点击检查。** 使用浏览器工具打开启动器打印的本机地址，确认进入「第 0 步」，点击「开始只读检查」，等待页面显示「检查完成」及数字结果。用户已明确请求检测时，无需再让用户复制命令、点击按钮或另行输入项目路径。
-4. **逐条复核标记项。** 打开网页上的「逐条复核」，按编号过完所有「建议复核」记录，逐条给出来源、证据和结论。同一个来源也可能有不止一条记录。按[逐条复核手册](.agents/skills/claude-environment-checklist/references/review.md)取得证据并回填网页。用户只要盘点时，以其指定范围为准。
+4. **逐条复核、分批回填。** 打开网页上的「逐条复核」，按编号过完所有「建议复核」记录。每查完一批立刻回填网页并确认进度，用户可以随时点开任一条看来源、证据和结论。[逐条复核手册](.agents/skills/claude-environment-checklist/references/review.md)
 5. **交付网页结果。** 看到「复核完成」后汇报已复核数、分类数字和已证实被当前会话读取的旧资料。没有直接证据时，明确本轮未证实。保留结果页和启动器。缺少本机访问或浏览器操作能力时，说明实际进度和阻塞。全程只读，保留配置、原文件、备份和会话。
 
 ## 下载项目，打开手帖
@@ -35,7 +35,7 @@
 
 [预览网页手帖](https://huangserva.github.io/claude-environment-checklist/)
 
-[![本地手帖用测试数据展示 44 条逐条复核完成和已证实读取的来源](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
+[![本地手帖用测试数据展示 44 条逐条复核的实时进度和一条证据明细](assets/homepage.png)](https://huangserva.github.io/claude-environment-checklist/)
 
 ## 遇到什么问题，从哪一项查
 

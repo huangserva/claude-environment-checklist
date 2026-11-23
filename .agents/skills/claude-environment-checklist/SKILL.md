@@ -7,7 +7,7 @@ description: 使用本项目排查 Claude 环境时，先打开下载项目里�
 
 ## 打开网页
 
-用户要求用本项目执行第 0 步，按 [README 的 Codex 执行顺序](../../../README.md#给-codex-的执行顺序)操作。使用完整仓库启动器打印的本机地址，打开浏览器并点击「开始只读检查」。网页数字出现后，按[逐条复核手册](references/review.md)过完所有标记项、回填结果。用户只要求盘点时，以其指定范围为准。用户只想浏览时，打开 [index.html](../../../index.html) 或线上预览。提到具体条目时，在网页地址后附上对应标识。
+用户要求用本项目执行第 0 步，按 [README 的 Codex 执行顺序](../../../README.md#给-codex-的执行顺序)操作。使用完整仓库启动器打印的本机地址，打开浏览器并点击「开始只读检查」。网页数字出现后，按[逐条复核手册](references/review.md)顺序核对并分批回填。查完一批就提交到原页面，确认进度后再查下一批。用户只要求盘点时，以其指定范围为准。用户只想浏览时，打开 [index.html](../../../index.html) 或线上预览。提到具体条目时，在网页地址后附上对应标识。
 
 - 一次盘点本机配置、记忆和外接工具 → [第 0 步 · 一键只读检查](https://huangserva.github.io/claude-environment-checklist/#quick-audit)。
 - 网络线路和公网出口 → [Claude 公网出口](https://huangserva.github.io/claude-environment-checklist/#network-egress)。
